@@ -65,25 +65,39 @@ window.Dashboard = {
                     
                     return `
                         <div class="raffle-card" data-id="${r.id}" data-collab="${!!r.is_collaborator}">
-                            <div class="raffle-card-top">
-                                <div class="raffle-name" style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                                    <span>${window.escapeHTML(r.title)}</span>
-                                    ${r.is_collaborator ? `<span class="badge" style="background:rgba(168,85,247,0.12); color:#c084fc; border:1px solid rgba(168,85,247,0.25); font-size:0.7rem; padding:0.15rem 0.45rem; border-radius:12px;">Colaborador</span>` : ''}
+                            <div class="raffle-card-top" style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; width: 100%;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; gap: 1rem;">
+                                    <div class="raffle-name" style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin: 0; line-height: 1.3;">
+                                        ${window.escapeHTML(r.title)}
+                                    </div>
+                                    <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--color-success); border: 1px solid rgba(16, 185, 129, 0.2); white-space: nowrap; font-size: 0.75rem;">
+                                        ${r.type === 'list' ? 'Por Listas' : 'Rifa Única'}
+                                    </span>
                                 </div>
-                                <span class="badge ${r.size <= 200 ? 'badge-available' : 'badge-paid'}">${r.size} Núm.</span>
+                                ${r.is_collaborator ? `
+                                    <span class="badge" style="background: rgba(168, 85, 247, 0.1); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.25); font-size: 0.7rem; padding: 0.15rem 0.45rem;">
+                                        <i data-lucide="users" style="width: 10px; height: 10px; display: inline-block; margin-right: 2px;"></i> Colaborador
+                                    </span>
+                                ` : ''}
                             </div>
-                            <div>
-                                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem;">
-                                    <span>Progreso de Ventas</span>
-                                    <span>${soldCount}/${r.size} (${soldPercent}%)</span>
+                            <div style="margin: 0.25rem 0; width: 100%;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--text-secondary);">
+                                    <span>Ventas</span>
+                                    <strong style="color: var(--text-primary);">${soldCount} / ${r.size} (${soldPercent}%)</strong>
                                 </div>
-                                <div class="progress-container">
+                                <div class="progress-container" style="margin: 0; height: 6px;">
                                     <div class="progress-bar" style="width: ${soldPercent}%;"></div>
                                 </div>
                             </div>
-                            <div class="raffle-card-stats">
-                                <span>Fecha: ${r.draw_date || 'Sin fecha'}</span>
-                                <span style="color: var(--color-success); font-weight: 600;">Pagados: ${paidCount}</span>
+                            <div class="raffle-card-stats" style="width: 100%; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-secondary);">
+                                <span style="display: flex; align-items: center; gap: 0.35rem;">
+                                    <i data-lucide="calendar" style="width: 14px; height: 14px; color: var(--text-secondary);"></i>
+                                    <span>${r.draw_date || 'Sin fecha'}</span>
+                                </span>
+                                <span style="display: flex; align-items: center; gap: 0.35rem; color: var(--color-success); font-weight: 600;">
+                                    <i data-lucide="check-circle-2" style="width: 14px; height: 14px; color: var(--color-success);"></i>
+                                    <span>Pagados: ${paidCount}</span>
+                                </span>
                             </div>
                         </div>
                     `;
