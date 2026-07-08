@@ -79,6 +79,7 @@ window.RaffleView = {
                                 <span>Vendidos: <strong style="color:var(--text-primary);">${soldCount}</strong></span>
                                 <span>Disponibles: <strong style="color:var(--text-primary);">${availableCount}</strong></span>
                                 <span>Pagados: <strong style="color:var(--color-success);">${paidCount}</strong></span>
+                                <span>Recaudado: <strong style="color:var(--color-success);">${formattedCollected}</strong></span>
                                 ${isCollab ? '' : `
                                     <button class="btn btn-secondary" id="btn-quick-add-single-collab" style="font-size:0.75rem; padding:0.3rem 0.6rem; display:flex; align-items:center; gap:0.25rem; font-weight:600; border:1px solid rgba(255,255,255,0.12); margin-left: 0.5rem;" title="Agregar colaboradores a este sorteo">
                                         <i data-lucide="user-plus" style="width: 12px; height: 12px;"></i>
