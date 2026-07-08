@@ -8,11 +8,9 @@ window.Storage = {
     // Helper to check authentication headers
     getHeaders() {
         const token = this.getToken();
-        const collabKey = localStorage.getItem('rifa_collab_key') || '';
         return {
             'Content-Type': 'application/json',
-            'Authorization': token ? `Bearer ${token}` : '',
-            'x-collaborator-key': collabKey
+            'Authorization': token ? `Bearer ${token}` : ''
         };
     },
 
@@ -212,6 +210,52 @@ window.Storage = {
                 if (!res.ok) throw new Error("Error importing tickets batch");
             }
             return { success: true };
+        } catch (err) {
+            console.error(err);
+            throw err;
+        }
+    },
+
+    // Collaborator API helpers
+    async getCollaborators(raffleId) {
+        try {
+            const res = await fetch(`/api/raffles/${raffleId}/collaborators`, {
+                headers: this.getHeaders()
+            });
+            if (!res.ok) throw new Error("Error fetching collaborators");
+            return await res.json();
+        } catch (err) {
+            console.error(err);
+            return [];
+        }
+    },
+
+    async addCollaborator(raffleId, email) {
+        try {
+            const res = await fetch(`/api/raffles/${raffleId}/collaborators`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({ email })
+            });
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || "Error adding collaborator");
+            }
+            return await res.json();
+        } catch (err) {
+            console.error(err);
+            throw err;
+        }
+    },
+
+    async deleteCollaborator(raffleId, userId) {
+        try {
+            const res = await fetch(`/api/raffles/${raffleId}/collaborators/${userId}`, {
+                method: 'DELETE',
+                headers: this.getHeaders()
+            });
+            if (!res.ok) throw new Error("Error deleting collaborator");
+            return await res.json();
         } catch (err) {
             console.error(err);
             throw err;

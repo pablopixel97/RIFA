@@ -77,16 +77,23 @@ window.SettingsTab = {
                             </div>
                         </div>
 
-                        <div class="form-group" style="margin-top: 1.5rem;">
-                            <label>Enlace de Colaborador (Vendedores)</label>
-                            <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 0.5rem;">
-                                Comparte este enlace con tu equipo para que puedan vender y registrar números directamente.
+                        <h3 style="margin-top: 2rem;">
+                            <i data-lucide="users" style="width: 18px; height: 18px;"></i>
+                            <span>Colaboradores (Vendedores)</span>
+                        </h3>
+                        <div class="form-group">
+                            <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 0.75rem;">
+                                Agrega a tu equipo ingresando el correo de su cuenta de RifaApp. Podrán entrar desde su propio dashboard para vender números.
                             </p>
-                            <div class="share-url-box">
-                                <input type="text" id="collab-link-input" class="input-control" value="${window.location.origin}/?collab=${raffle.id}&key=${raffle.collaboratorKey || ''}" readonly style="background: rgba(0,0,0,0.3); font-size:0.85rem;">
-                                <button type="button" class="btn btn-secondary" id="btn-copy-collab" style="padding:0.75rem;">
-                                    <i data-lucide="copy" style="width: 16px; height: 16px;"></i>
+                            <form id="add-collab-form" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
+                                <input type="email" id="collab-email-input" class="input-control" placeholder="correo@vendedor.com" required style="font-size: 0.85rem;">
+                                <button type="submit" class="btn btn-primary" style="white-space: nowrap; font-size: 0.85rem;">
+                                    Agregar
                                 </button>
+                            </form>
+                            
+                            <div id="collabs-list" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px; overflow-y: auto; padding-right: 2px;">
+                                <!-- Collaborators list rendered dynamically -->
                             </div>
                         </div>
                     </div>
@@ -110,9 +117,84 @@ window.SettingsTab = {
         const sizeForm = container.querySelector('#settings-size-form');
         const copyBtn = container.querySelector('#btn-copy-link');
         const shareInput = container.querySelector('#share-link-input');
-        const copyCollabBtn = container.querySelector('#btn-copy-collab');
-        const collabInput = container.querySelector('#collab-link-input');
         const deleteRaffleBtn = container.querySelector('#btn-delete-raffle');
+        
+        const addCollabForm = container.querySelector('#add-collab-form');
+        const collabEmailInput = container.querySelector('#collab-email-input');
+        const collabsListContainer = container.querySelector('#collabs-list');
+
+        // Collaborators fetch & render loop
+        const loadAndRenderCollabs = async () => {
+            collabsListContainer.innerHTML = `
+                <div style="display:flex; align-items:center; justify-content:center; padding:1.5rem; color:var(--text-muted);">
+                    <i data-lucide="loader-circle" style="width:20px;height:20px;animation:spin 1s linear infinite; margin-right: 0.5rem;"></i>
+                    <span style="font-size:0.8rem;">Cargando...</span>
+                </div>
+            `;
+            if (window.lucide) window.lucide.createIcons();
+
+            const collabs = await window.Storage.getCollaborators(raffle.id);
+            
+            collabsListContainer.innerHTML = '';
+            
+            if (collabs.length === 0) {
+                collabsListContainer.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding: 1rem 0;">Aún no has agregado colaboradores a esta rifa.</p>`;
+                return;
+            }
+
+            collabs.forEach(c => {
+                const item = document.createElement('div');
+                item.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:0.5rem 0.75rem; border-radius:8px; border:1px solid var(--border-color); font-size:0.85rem;';
+                item.innerHTML = `
+                    <div style="min-width: 0; flex: 1; padding-right: 0.5rem;">
+                        <div style="font-weight:600; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${c.name || 'Sin nombre'}</div>
+                        <div style="font-size:0.75rem; color:var(--text-secondary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${c.email}</div>
+                    </div>
+                    <button class="btn btn-danger btn-icon btn-remove-collab" data-id="${c.id}" style="padding:0.4rem; border-radius:6px; flex-shrink: 0;" title="Remover colaborador">
+                        <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
+                    </button>
+                `;
+                
+                item.querySelector('.btn-remove-collab').addEventListener('click', async () => {
+                    if (confirm(`¿Estás seguro de remover a ${c.name || c.email} como colaborador? Perderá acceso a esta rifa.`)) {
+                        try {
+                            await window.Storage.deleteCollaborator(raffle.id, c.id);
+                            window.showToast("Colaborador removido exitosamente", "success");
+                            loadAndRenderCollabs();
+                        } catch (err) {
+                            window.showToast("Error al remover colaborador", "danger");
+                        }
+                    }
+                });
+
+                collabsListContainer.appendChild(item);
+            });
+
+            if (window.lucide) window.lucide.createIcons();
+        };
+
+        // Add collaborator submit listener
+        addCollabForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = collabEmailInput.value.trim();
+            if (!email) return;
+
+            const submitBtn = addCollabForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Agregando...';
+
+            try {
+                await window.Storage.addCollaborator(raffle.id, email);
+                window.showToast("¡Colaborador agregado con éxito!", "success");
+                collabEmailInput.value = '';
+                loadAndRenderCollabs();
+            } catch (err) {
+                window.showToast(err.message, "danger");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Agregar';
+            }
+        });
 
         // Form 1: Details Update
         detailsForm.addEventListener('submit', async (e) => {
@@ -180,20 +262,6 @@ window.SettingsTab = {
             }
         });
 
-        // Copy Collab Link
-        copyCollabBtn.addEventListener('click', () => {
-            collabInput.select();
-            collabInput.setSelectionRange(0, 99999);
-            
-            try {
-                navigator.clipboard.writeText(collabInput.value);
-                window.showToast("¡Enlace de colaborador copiado!", "success");
-            } catch (err) {
-                document.execCommand('copy');
-                window.showToast("¡Enlace copiado!", "success");
-            }
-        });
-
         // Delete Raffle
         deleteRaffleBtn.addEventListener('click', async () => {
             if (confirm(`¿Estás COMPLETAMENTE seguro de eliminar la rifa "${raffle.name}"? Esta acción no se puede deshacer y borrará todos los números e historial.`)) {
@@ -207,5 +275,8 @@ window.SettingsTab = {
                 }
             }
         });
+
+        // Load collaborators lists on render
+        loadAndRenderCollabs();
     }
 };

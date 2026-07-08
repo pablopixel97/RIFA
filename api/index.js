@@ -19,11 +19,6 @@ app.use(express.static(path.join(__dirname, '..')));
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    const collabKey = req.headers['x-collaborator-key'];
-    
-    if (!token && collabKey) {
-        return next();
-    }
     
     if (!token) return res.status(401).json({ error: 'Acceso no autorizado' });
     
@@ -36,15 +31,18 @@ function authenticateToken(req, res, next) {
 
 // Access verification helper for owners and collaborators
 async function verifyAccess(raffleId, req) {
-    if (req.user && req.user.id) {
-        const raffle = await db('raffles').select('id').where({ id: raffleId, user_id: req.user.id }).first();
-        if (raffle) return { isOwner: true };
+    if (!req.user || !req.user.id) return null;
+    
+    const raffle = await db('raffles').select('id', 'user_id').where({ id: raffleId }).first();
+    if (!raffle) return null;
+    
+    if (raffle.user_id === req.user.id) {
+        return { isOwner: true };
     }
     
-    const collabKey = req.headers['x-collaborator-key'];
-    if (collabKey) {
-        const raffle = await db('raffles').select('id').where({ id: raffleId, collaborator_key: collabKey }).first();
-        if (raffle) return { isOwner: false };
+    const collab = await db('raffle_collaborators').where({ raffle_id: raffleId, user_id: req.user.id }).first();
+    if (collab) {
+        return { isOwner: false };
     }
     
     return null;
@@ -231,17 +229,19 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
 // Get all raffles
 app.get('/api/raffles', authenticateToken, async (req, res) => {
     try {
-        // Return raffles belonging to this user with computed ticket statistics
         const rows = await db('raffles as r')
             .select('r.*')
             .select(db.raw(`(SELECT COUNT(*) FROM tickets t WHERE t.raffle_id = r.id AND (t.name != '' OR t.phone != '')) AS sold_count`))
             .select(db.raw(`(SELECT COUNT(*) FROM tickets t WHERE t.raffle_id = r.id AND t.paid = ${isPostgres ? 'true' : '1'}) AS paid_count`))
+            .leftJoin('raffle_collaborators as c', 'c.raffle_id', 'r.id')
             .where('r.user_id', req.user.id)
+            .orWhere('c.user_id', req.user.id)
+            .groupBy('r.id')
             .orderBy('r.created_at', 'desc');
             
-        // Map postgres raw count results (which might return as strings/BigInt) to standard integers
         const formattedRows = rows.map(r => ({
             ...r,
+            is_collaborator: r.user_id !== req.user.id,
             sold_count: parseInt(r.sold_count || 0, 10),
             paid_count: parseInt(r.paid_count || 0, 10)
         }));
@@ -481,6 +481,89 @@ app.post('/api/raffles/:id/import', authenticateToken, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Error al importar datos en bloque' });
+    }
+});
+
+// === COLLABORATOR MANAGEMENT ENDPOINTS ===
+
+// Get list of collaborators for a raffle (Owner only)
+app.get('/api/raffles/:id/collaborators', authenticateToken, async (req, res) => {
+    const raffleId = req.params.id;
+    try {
+        const access = await verifyAccess(raffleId, req);
+        if (!access || !access.isOwner) {
+            return res.status(403).json({ error: 'Acceso denegado. Solo el dueño puede ver los colaboradores.' });
+        }
+        
+        const collaborators = await db('raffle_collaborators as rc')
+            .join('users as u', 'u.id', 'rc.user_id')
+            .select('u.id', 'u.email', 'u.name')
+            .where('rc.raffle_id', raffleId);
+            
+        res.json(collaborators);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error al consultar colaboradores' });
+    }
+});
+
+// Add collaborator to raffle by email (Owner only)
+app.post('/api/raffles/:id/collaborators', authenticateToken, async (req, res) => {
+    const raffleId = req.params.id;
+    const { email } = req.body;
+    
+    if (!email) return res.status(400).json({ error: 'El correo electrónico es requerido' });
+    
+    try {
+        const access = await verifyAccess(raffleId, req);
+        if (!access || !access.isOwner) {
+            return res.status(403).json({ error: 'Acceso denegado. Solo el dueño puede invitar colaboradores.' });
+        }
+        
+        // Find collaborator user by email
+        const targetUser = await db('users').where({ email: email.toLowerCase().trim() }).first();
+        if (!targetUser) {
+            return res.status(404).json({ error: 'No existe ningún usuario registrado con ese correo electrónico' });
+        }
+        
+        if (targetUser.id === req.user.id) {
+            return res.status(400).json({ error: 'No puedes agregarte a ti mismo como colaborador' });
+        }
+        
+        // Check if already collaborating
+        const existing = await db('raffle_collaborators').where({ raffle_id: raffleId, user_id: targetUser.id }).first();
+        if (existing) {
+            return res.status(400).json({ error: 'El usuario ya es colaborador de esta rifa' });
+        }
+        
+        await db('raffle_collaborators').insert({
+            raffle_id: raffleId,
+            user_id: targetUser.id
+        });
+        
+        res.status(201).json({ message: 'Colaborador agregado correctamente', user: { id: targetUser.id, email: targetUser.email, name: targetUser.name } });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error al agregar colaborador' });
+    }
+});
+
+// Remove collaborator from raffle (Owner only)
+app.delete('/api/raffles/:id/collaborators/:userId', authenticateToken, async (req, res) => {
+    const raffleId = req.params.id;
+    const { userId } = req.params;
+    
+    try {
+        const access = await verifyAccess(raffleId, req);
+        if (!access || !access.isOwner) {
+            return res.status(403).json({ error: 'Acceso denegado. Solo el dueño puede remover colaboradores.' });
+        }
+        
+        await db('raffle_collaborators').where({ raffle_id: raffleId, user_id: userId }).del();
+        res.json({ message: 'Colaborador removido exitosamente' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error al remover colaborador' });
     }
 });
 

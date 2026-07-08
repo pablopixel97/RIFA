@@ -105,6 +105,15 @@ async function initDb() {
         });
     }
 
+    // Create raffle_collaborators table
+    if (!await db.schema.hasTable('raffle_collaborators')) {
+        await db.schema.createTable('raffle_collaborators', table => {
+            table.string('raffle_id').references('id').inTable('raffles').onDelete('CASCADE');
+            table.integer('user_id').unsigned().references('id').inTable('users').onDelete('CASCADE');
+            table.primary(['raffle_id', 'user_id']);
+        });
+    }
+
     // Seed default administrator if users table is empty
     const bcrypt = require('bcryptjs');
     const userCount = await db('users').count('id as count').first();
