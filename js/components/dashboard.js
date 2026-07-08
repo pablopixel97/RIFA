@@ -115,12 +115,7 @@ window.Dashboard = {
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                 <div class="form-group">
                                     <label for="raffle-size-input">Cantidad de Números</label>
-                                    <select id="raffle-size-input" class="input-control">
-                                        <option value="100">100 Números</option>
-                                        <option value="200">200 Números</option>
-                                        <option value="500" selected>500 Números</option>
-                                        <option value="1000">1000 Números</option>
-                                    </select>
+                                    <input type="number" id="raffle-size-input" class="input-control" value="500" min="1" max="10000" placeholder="Ej. 500" required>
                                 </div>
                                 <div class="form-group">
                                     <label for="raffle-date-input">Fecha del Sorteo</label>
