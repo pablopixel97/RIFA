@@ -45,13 +45,7 @@ window.SettingsTab = {
                             <div class="form-group">
                                 <label for="settings-size-input">Total de Números Disponibles</label>
                                 <div style="display: flex; gap: 0.5rem;">
-                                    <select id="settings-size-input" class="input-control" style="flex:1;">
-                                        <option value="100" ${raffle.size === 100 ? 'selected' : ''}>100 Números</option>
-                                        <option value="200" ${raffle.size === 200 ? 'selected' : ''}>200 Números</option>
-                                        <option value="500" ${raffle.size === 500 ? 'selected' : ''}>500 Números</option>
-                                        <option value="1000" ${raffle.size === 1000 ? 'selected' : ''}>1000 Números</option>
-                                        <option value="2000" ${raffle.size === 2000 ? 'selected' : ''}>2000 Números</option>
-                                    </select>
+                                    <input type="number" id="settings-size-input" class="input-control" value="${raffle.size}" min="1" max="10000" placeholder="Ej. 500" required style="flex:1;">
                                     <button type="submit" class="btn btn-secondary">Actualizar</button>
                                 </div>
                                 <p style="font-size:0.75rem; color:var(--text-muted); margin-top: 0.35rem;">
