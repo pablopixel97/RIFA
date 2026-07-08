@@ -2,7 +2,7 @@ const knex = require('knex');
 const path = require('path');
 
 // Check for database URL to determine environment
-const pgUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+const pgUrl = process.env.NEON_DATABASE_URL || process.env.POSTGRES_URL || process.env.DATABASE_URL;
 const isPostgres = !!pgUrl;
 
 const dbConfig = isPostgres ? {
