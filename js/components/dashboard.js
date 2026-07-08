@@ -150,19 +150,18 @@ window.Dashboard = {
                             </div>
                             
                             <div class="form-row-grid">
-                                <div class="form-group">
+                                <div class="form-group" style="margin-bottom: 0;">
                                     <label id="size-input-label" for="raffle-size-input">Cantidad de Números</label>
                                     <input type="number" id="raffle-size-input" class="input-control" value="500" min="1" max="10000" placeholder="Ej. 500" required>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group" style="margin-bottom: 0;">
                                     <label for="raffle-date-input">Fecha del Sorteo</label>
                                     <input type="date" id="raffle-date-input" class="input-control">
                                 </div>
-                            </div>
-                            
-                            <div class="form-group" style="margin-top: 1rem; margin-bottom: 0;">
-                                <label for="raffle-price-input">Valor del Número ($)</label>
-                                <input type="number" id="raffle-price-input" class="input-control" value="5000" min="0" step="500" placeholder="Ej. 5000" required>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="raffle-price-input">Valor del Número ($)</label>
+                                    <input type="number" id="raffle-price-input" class="input-control" value="5000" min="0" step="500" placeholder="Ej. 5000" required>
+                                </div>
                             </div>
                             
                             <div id="create-import-container" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
