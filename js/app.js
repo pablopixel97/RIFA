@@ -67,13 +67,11 @@ const App = {
             <div class="logo-container">
                 <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <rect width="12" height="12" x="2" y="10" rx="2" ry="2"/>
-                    <path d="m22 8-6 4"/>
-                    <rect width="12" height="12" x="10" y="2" rx="2" ry="2"/>
-                    <path d="m2 14 6-4"/>
-                    <path d="M6 14h.01"/>
-                    <path d="M18 8h.01"/>
-                    <path d="M14 6h.01"/>
-                    <path d="M10 10h.01"/>
+                    <path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L8.46 8"/>
+                    <path d="M6 18h.01"/>
+                    <path d="M10 14h.01"/>
+                    <path d="M15 6h.01"/>
+                    <path d="M18 9h.01"/>
                 </svg>
                 <div class="logo-text">RifaApp</div>
             </div>
