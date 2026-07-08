@@ -115,19 +115,40 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-app.get('/api/debug-env', (req, res) => {
-    res.json({
+app.get('/api/debug-env', async (req, res) => {
+    const connUrl = process.env.NEON_DATABASE_URL || process.env.POSTGRES_URL || process.env.DATABASE_URL;
+    const info = {
         has_neon: !!process.env.NEON_DATABASE_URL,
         has_postgres: !!process.env.POSTGRES_URL,
         has_database: !!process.env.DATABASE_URL,
-        keys: Object.keys(process.env).filter(k => 
-            !k.toLowerCase().includes('secret') && 
-            !k.toLowerCase().includes('password') && 
-            !k.toLowerCase().includes('key') && 
-            !k.toLowerCase().includes('token') &&
-            !k.toLowerCase().includes('url')
-        )
-    });
+        isPostgres,
+        dbInitialized,
+        pg_url_prefix: connUrl ? connUrl.substring(0, 40) + '...' : null
+    };
+    
+    // Try a real DB query with 5s timeout
+    try {
+        const result = await Promise.race([
+            db.raw('SELECT 1 as ok'),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('DB query timed out after 5s')), 5000))
+        ]);
+        info.db_connected = true;
+        info.db_result = result.rows ? result.rows[0] : result[0];
+    } catch (err) {
+        info.db_connected = false;
+        info.db_error = err.message;
+    }
+    
+    // Check if tables exist
+    try {
+        const hasUsers = await db.schema.hasTable('users');
+        const hasRaffles = await db.schema.hasTable('raffles');
+        info.tables = { users: hasUsers, raffles: hasRaffles };
+    } catch (err) {
+        info.tables_error = err.message;
+    }
+    
+    res.json(info);
 });
 
 

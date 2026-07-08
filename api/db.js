@@ -9,12 +9,14 @@ const dbConfig = isPostgres ? {
     client: 'pg',
     connection: {
         connectionString: pgUrl,
-        ssl: { rejectUnauthorized: false } // Required for Vercel Postgres / Neon SQL
-    }
+        ssl: { rejectUnauthorized: false }
+    },
+    pool: { min: 0, max: 5 },
+    acquireConnectionTimeout: 8000
 } : {
     client: 'sqlite3',
     connection: {
-        filename: path.join(__dirname, '..', 'database.db') // Root folder database.db file
+        filename: path.join(__dirname, '..', 'database.db')
     },
     useNullAsDefault: true
 };
