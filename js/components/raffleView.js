@@ -328,7 +328,7 @@ window.RaffleView = {
                         <table>
                             <thead>
                                 <tr>
-                                    <th style="width: 100px;">Número</th>
+                                    <th style="width: 50px; text-align: center;">N°</th>
                                     ${raffle.type === 'list' ? '<th>Vendedor</th>' : ''}
                                     <th>Comprador</th>
                                     <th>Teléfono</th>
@@ -351,10 +351,10 @@ window.RaffleView = {
                                     
                                     return `
                                         <tr>
-                                            <td><strong style="font-size: 1.1rem; color: var(--color-primary);">${num.number}</strong></td>
+                                            <td style="text-align: center;"><strong style="font-size: 1.1rem; color: var(--color-primary);">${num.number}</strong></td>
                                             ${raffle.type === 'list' ? `<td><strong>${num.seller_name}</strong></td>` : ''}
                                             <td>${num.name || '<span style="color:var(--text-muted); font-style:italic;">Disponible</span>'}</td>
-                                            <td>${num.phone || '<span style="color:var(--text-muted); font-style:italic;">-</span>'}</td>
+                                            <td style="white-space: nowrap;">${num.phone || '<span style="color:var(--text-muted); font-style:italic;">-</span>'}</td>
                                             <td>${badgeHtml}</td>
                                             <td style="text-align: right;">
                                                 <button class="btn btn-secondary btn-icon edit-num-btn" data-num="${num.number}" data-seller-id="${num.seller_id}" title="Editar comprador" style="padding: 0.4rem; border-radius:6px; margin-right:5px;">
