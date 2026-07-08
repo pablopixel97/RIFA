@@ -61,6 +61,12 @@ const App = {
         const header = document.getElementById('app-header');
         if (!header) return;
 
+        if (this.state.currentView === 'login') {
+            header.style.display = 'none';
+            return;
+        }
+        header.style.display = 'flex';
+
         const isLight = this.state.theme === 'light';
 
         header.innerHTML = `
