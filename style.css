@@ -724,8 +724,8 @@ main {
 /* VISOR GENERAL (GRID) */
 .numbers-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+    gap: 0.65rem;
     margin-bottom: 2rem;
 }
 
@@ -739,7 +739,7 @@ main {
     align-items: center;
     cursor: pointer;
     font-weight: 800;
-    font-size: 1.15rem;
+    font-size: 1.25rem;
     user-select: none;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: var(--shadow-sm);
@@ -778,14 +778,17 @@ main {
 }
 
 .number-card-buyer-preview {
-    font-size: 0.65rem;
-    font-weight: 500;
+    font-size: 0.7rem;
+    font-weight: 600;
     max-width: 90%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    opacity: 0.8;
-    margin-top: 0.15rem;
+    margin-top: 0.35rem;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* LIST VIEW */
