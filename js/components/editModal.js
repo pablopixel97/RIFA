@@ -16,12 +16,12 @@ window.EditModal = {
                         <div class="modal-body">
                             <div class="form-group">
                                 <label for="buyer-name-input">Nombre del Comprador</label>
-                                <input type="text" id="buyer-name-input" class="input-control" placeholder="Ej. Juan Pérez" value="${numberDetails.name}">
+                                <input type="text" id="buyer-name-input" class="input-control" placeholder="Ej. Juan Pérez" value="${window.escapeHTML(numberDetails.name)}" maxlength="50">
                             </div>
                             
                             <div class="form-group">
                                 <label for="buyer-phone-input">Teléfono / WhatsApp</label>
-                                <input type="text" id="buyer-phone-input" class="input-control" placeholder="Ej. +56 9 1234 5678" value="${numberDetails.phone}">
+                                <input type="text" id="buyer-phone-input" class="input-control" placeholder="Ej. 912345678" value="${window.escapeHTML(numberDetails.phone)}" maxlength="15">
                             </div>
                             
                             <div class="switch-container">
@@ -68,6 +68,13 @@ window.EditModal = {
         const closeBtn = container.querySelector('#edit-modal-close');
         const cancelBtn = container.querySelector('#edit-modal-cancel');
         const paidCheckbox = container.querySelector('#buyer-paid-checkbox');
+        const phoneInput = container.querySelector('#buyer-phone-input');
+        
+        if (phoneInput) {
+            phoneInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+        }
         const statusDesc = container.querySelector('#payment-status-desc');
         const deleteBtn = container.querySelector('#btn-delete-buyer');
 
