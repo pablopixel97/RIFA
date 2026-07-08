@@ -25,9 +25,42 @@ function authenticateToken(req, res, next) {
     jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err) return res.status(403).json({ error: 'Token inválido o expirado' });
         req.user = user;
-        next();
     });
 }
+
+// Database lazy initialization helper to avoid race conditions on Serverless cold starts
+let dbInitialized = false;
+let dbInitPromise = null;
+
+async function ensureDb() {
+    if (dbInitialized) return;
+    if (!dbInitPromise) {
+        dbInitPromise = initDb().then(() => {
+            dbInitialized = true;
+        }).catch(err => {
+            dbInitPromise = null;
+            throw err;
+        });
+    }
+    return dbInitPromise;
+}
+
+async function checkDbInit(req, res, next) {
+    // Skip db initialization for diagnostic route
+    if (req.path === '/api/debug-env') {
+        return next();
+    }
+    try {
+        await ensureDb();
+        next();
+    } catch (err) {
+        console.error("Database initialization failed during request:", err);
+        res.status(500).json({ error: "La base de datos se está inicializando o falló. Reintenta." });
+    }
+}
+
+// Register DB initialization check globally for all routes
+app.use(checkDbInit);
 
 // === AUTHENTICATION ENDPOINTS ===
 
