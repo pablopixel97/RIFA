@@ -21,7 +21,7 @@ window.Login = {
                         <form id="auth-form">
                             <div class="form-group">
                                 <label for="username">Usuario (Email)</label>
-                                <input type="email" id="username" class="input-control" value="${isSignupMode ? '' : 'admin@rifa.com'}" placeholder="ejemplo@rifa.com" required autocomplete="username">
+                                <input type="email" id="username" class="input-control" value="" placeholder="ejemplo@rifa.com" required autocomplete="username">
                             </div>
                             ${isSignupMode ? `
                             <div class="form-group">
@@ -31,7 +31,7 @@ window.Login = {
                             ` : ''}
                             <div class="form-group">
                                 <label for="password">Contraseña</label>
-                                <input type="password" id="password" class="input-control" value="${isSignupMode ? '' : 'admin123'}" placeholder="••••••••" required autocomplete="current-password">
+                                <input type="password" id="password" class="input-control" value="" placeholder="••••••••" required autocomplete="current-password">
                             </div>
                             
                             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
