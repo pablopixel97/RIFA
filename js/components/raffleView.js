@@ -10,17 +10,19 @@ window.RaffleView = {
 
         let activeView = 'grid'; // grid, list, details, settings
         let searchQuery = '';
+        let selectedSellerId = null;
+        let selectedSellerName = '';
 
         const isCollab = !!(callbacks && callbacks.isCollaborator);
         const drawRaffleUI = async () => {
             raffle = await window.Storage.getRaffle(raffleId);
             
-            const numbersArr = Object.values(raffle.numbers);
-            const size = raffle.size;
+            const ticketsArr = raffle.tickets || [];
+            const size = raffle.type === 'list' ? ticketsArr.length : raffle.size;
             
-            const soldCount = numbersArr.filter(n => n.name !== '' || n.phone !== '').length;
+            const soldCount = ticketsArr.filter(n => n.name !== '' || n.phone !== '').length;
             const availableCount = size - soldCount;
-            const paidCount = numbersArr.filter(n => n.paid).length;
+            const paidCount = ticketsArr.filter(n => n.paid).length;
             const unpaidCount = soldCount - paidCount;
             
             const ticketPrice = raffle.ticketPrice || 5000;
@@ -40,7 +42,7 @@ window.RaffleView = {
                             <h2>${raffle.name}</h2>
                             <div class="raffle-view-meta">
                                 <span><i data-lucide="calendar" style="width: 14px; height: 14px; display:inline; vertical-align:middle;"></i> Sorteo: ${raffle.date || 'Sin fecha'}</span>
-                                <span><i data-lucide="hash" style="width: 14px; height: 14px; display:inline; vertical-align:middle;"></i> Total: ${size} números</span>
+                                <span><i data-lucide="hash" style="width: 14px; height: 14px; display:inline; vertical-align:middle;"></i> Total: ${size} números ${raffle.type === 'list' ? ` (${raffle.listSize} por lista)` : ''}</span>
                             </div>
                         </div>
                     </div>
@@ -124,47 +126,148 @@ window.RaffleView = {
 
         const renderActiveViewContent = () => {
             const innerContainer = container.querySelector('#active-view-container');
-            const numbersArr = Object.values(raffle.numbers);
+            const ticketsArr = raffle.tickets || [];
 
             if (activeView === 'grid') {
-                innerContainer.innerHTML = `
-                    <div class="numbers-grid">
-                        ${numbersArr.map(num => {
-                            const isBought = num.name !== '' || num.phone !== '';
-                            let stateClass = 'available';
-                            let unpaidClass = '';
-                            
-                            if (isBought) {
-                                stateClass = 'bought';
-                                if (!num.paid) {
-                                    unpaidClass = 'unpaid';
-                                }
-                            }
-                            
-                            return `
-                                <div class="number-card ${stateClass} ${unpaidClass}" data-num="${num.number}" title="${isBought ? `${num.name} ${num.phone ? `(${num.phone})` : ''} - ${num.paid ? 'Pagado' : 'Pendiente'}` : 'Disponible'}">
-                                    <span>${num.number}</span>
-                                    ${isBought ? `<span class="number-card-buyer-preview">${num.name || num.phone}</span>` : ''}
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `;
-
-                innerContainer.querySelectorAll('.number-card').forEach(card => {
-                    card.addEventListener('click', () => {
-                        const numVal = parseInt(card.getAttribute('data-num'), 10);
-                        openEditModalFor(numVal);
+                if (raffle.type === 'list' && !isCollab && selectedSellerId === null) {
+                    // Render Sellers Progress Dashboard for Admin
+                    const ticketsBySeller = {};
+                    ticketsArr.forEach(t => {
+                        if (!ticketsBySeller[t.seller_id]) {
+                            ticketsBySeller[t.seller_id] = {
+                                sellerId: t.seller_id,
+                                sellerName: t.seller_name || 'Organizador',
+                                tickets: []
+                            };
+                        }
+                        ticketsBySeller[t.seller_id].tickets.push(t);
                     });
-                });
+                    
+                    const sellersList = Object.values(ticketsBySeller);
+                    
+                    innerContainer.innerHTML = `
+                        <div style="background:var(--bg-card); padding:1.5rem; border-radius:12px; border:1px solid var(--border-color); display:flex; flex-direction:column; gap:1.25rem; margin-top:0.5rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
+                                <h3 style="margin:0; font-size:1.1rem; font-weight:700; display:flex; align-items:center; gap:0.5rem; color:var(--text-primary);">
+                                    <i data-lucide="users" style="width: 20px; height: 20px; color: var(--color-primary);"></i>
+                                    <span>Talonarios por Vendedor</span>
+                                </h3>
+                                <span style="font-size:0.75rem; color:var(--text-secondary);">Cada vendedor posee una lista única e independiente</span>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                                ${sellersList.map(s => {
+                                    const sTickets = s.tickets;
+                                    const sSize = sTickets.length;
+                                    const sSold = sTickets.filter(t => t.name !== '' || t.phone !== '').length;
+                                    const sPaid = sTickets.filter(t => t.paid).length;
+                                    const sPercent = Math.round((sSold / sSize) * 100) || 0;
+                                    const sCollected = sPaid * (raffle.ticketPrice || 5000);
+                                    const sFormattedCollected = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(sCollected);
+                                    
+                                    return `
+                                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; background:rgba(255,255,255,0.02); padding:1rem; border-radius:10px; border:1px solid var(--border-color); gap:1rem;">
+                                            <div style="flex:1; min-width: 200px;">
+                                                <div style="font-weight:700; font-size:0.95rem; color:var(--text-primary); margin-bottom:0.25rem; display:flex; align-items:center; gap:0.5rem;">
+                                                    <i data-lucide="user" style="width:16px;height:16px;color:var(--text-secondary);"></i>
+                                                    <span>${s.sellerName}</span>
+                                                    ${s.sellerId === raffle.ownerId ? `<span class="badge" style="background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(59,130,246,0.25); font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:10px; font-weight:normal;">Organizador</span>` : ''}
+                                                </div>
+                                                <div style="font-size:0.8rem; color:var(--text-secondary); display:flex; gap:1.5rem; margin-bottom:0.4rem;">
+                                                    <span>Vendido: <strong>${sSold}/${sSize} (${sPercent}%)</strong></span>
+                                                    <span>Recaudado: <strong style="color:var(--color-success);">${sFormattedCollected}</strong></span>
+                                                </div>
+                                                <div class="progress-container" style="max-width:320px; height:6px;">
+                                                    <div class="progress-bar" style="width: ${sPercent}%;"></div>
+                                                </div>
+                                            </div>
+                                            <button class="btn btn-secondary btn-view-seller-list" data-seller-id="${s.sellerId}" data-seller-name="${s.sellerName}" style="font-size:0.8rem; padding:0.5rem 1rem;">
+                                                <i data-lucide="eye" style="width:16px;height:16px;margin-right:0.35rem;"></i>
+                                                <span>Ver Talonario</span>
+                                            </button>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                    
+                    if (window.lucide) window.lucide.createIcons();
+                    
+                    innerContainer.querySelectorAll('.btn-view-seller-list').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            selectedSellerId = parseInt(btn.getAttribute('data-seller-id'), 10);
+                            selectedSellerName = btn.getAttribute('data-seller-name');
+                            drawRaffleUI();
+                        });
+                    });
+                    
+                } else {
+                    const gridTickets = (raffle.type === 'list' && selectedSellerId !== null)
+                        ? ticketsArr.filter(t => t.seller_id === selectedSellerId)
+                        : (raffle.type === 'list' && isCollab ? ticketsArr.filter(t => t.seller_id === state.user.id) : Object.values(raffle.numbers || {}));
+                        
+                    innerContainer.innerHTML = `
+                        ${(raffle.type === 'list' && selectedSellerId !== null) ? `
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem;">
+                                <div style="display:flex; align-items:center; gap:0.5rem;">
+                                    <button class="btn btn-secondary" id="btn-back-sellers-list" style="padding:0.4rem 0.6rem; font-size:0.8rem;">
+                                        <i data-lucide="chevron-left" style="width:16px;height:16px;margin-right:0.15rem;"></i>
+                                        <span>Atrás</span>
+                                    </button>
+                                    <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:var(--text-primary);">Lista de: <span style="color:var(--color-primary);">${selectedSellerName}</span></h3>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="numbers-grid">
+                            ${gridTickets.map(num => {
+                                const isBought = num.name !== '' || num.phone !== '';
+                                let stateClass = 'available';
+                                let unpaidClass = '';
+                                
+                                if (isBought) {
+                                    stateClass = 'bought';
+                                    if (!num.paid) {
+                                        unpaidClass = 'unpaid';
+                                    }
+                                }
+                                
+                                return `
+                                    <div class="number-card ${stateClass} ${unpaidClass}" data-num="${num.number}" title="${isBought ? `${num.name} ${num.phone ? `(${num.phone})` : ''} - ${num.paid ? 'Pagado' : 'Pendiente'}` : 'Disponible'}">
+                                        <span>${num.number}</span>
+                                        ${isBought ? `<span class="number-card-buyer-preview">${num.name || num.phone}</span>` : ''}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+
+                    if (window.lucide) window.lucide.createIcons();
+
+                    if (container.querySelector('#btn-back-sellers-list')) {
+                        container.querySelector('#btn-back-sellers-list').addEventListener('click', () => {
+                            selectedSellerId = null;
+                            selectedSellerName = '';
+                            drawRaffleUI();
+                        });
+                    }
+
+                    innerContainer.querySelectorAll('.number-card').forEach(card => {
+                        card.addEventListener('click', () => {
+                            const numVal = parseInt(card.getAttribute('data-num'), 10);
+                            openEditModalFor(numVal, selectedSellerId);
+                        });
+                    });
+                }
 
             } else if (activeView === 'list') {
-                const filtered = numbersArr.filter(num => {
+                const filtered = ticketsArr.filter(num => {
                     if (searchQuery === '') return true;
                     const q = searchQuery.toLowerCase();
                     return String(num.number).includes(q) || 
                            num.name.toLowerCase().includes(q) || 
-                           num.phone.toLowerCase().includes(q);
+                           num.phone.toLowerCase().includes(q) ||
+                           (num.seller_name && num.seller_name.toLowerCase().includes(q));
                 });
 
                 innerContainer.innerHTML = `
@@ -173,6 +276,7 @@ window.RaffleView = {
                             <thead>
                                 <tr>
                                     <th style="width: 100px;">Número</th>
+                                    ${raffle.type === 'list' ? '<th>Vendedor</th>' : ''}
                                     <th>Comprador</th>
                                     <th>Teléfono</th>
                                     <th style="width: 150px;">Estado</th>
@@ -195,15 +299,16 @@ window.RaffleView = {
                                     return `
                                         <tr>
                                             <td><strong style="font-size: 1.1rem; color: var(--color-primary);">${num.number}</strong></td>
+                                            ${raffle.type === 'list' ? `<td><strong>${num.seller_name}</strong></td>` : ''}
                                             <td>${num.name || '<span style="color:var(--text-muted); font-style:italic;">Disponible</span>'}</td>
                                             <td>${num.phone || '<span style="color:var(--text-muted); font-style:italic;">-</span>'}</td>
                                             <td>${badgeHtml}</td>
                                             <td style="text-align: right;">
-                                                <button class="btn btn-secondary btn-icon edit-num-btn" data-num="${num.number}" title="Editar comprador" style="padding: 0.4rem; border-radius:6px; margin-right:5px;">
+                                                <button class="btn btn-secondary btn-icon edit-num-btn" data-num="${num.number}" data-seller-id="${num.seller_id}" title="Editar comprador" style="padding: 0.4rem; border-radius:6px; margin-right:5px;">
                                                     <i data-lucide="edit-3" style="width: 16px; height: 16px;"></i>
                                                 </button>
                                                 ${isBought ? `
-                                                    <button class="btn btn-danger btn-icon clear-num-btn" data-num="${num.number}" title="Eliminar comprador" style="padding: 0.4rem; border-radius:6px;">
+                                                    <button class="btn btn-danger btn-icon clear-num-btn" data-num="${num.number}" data-seller-id="${num.seller_id}" title="Eliminar comprador" style="padding: 0.4rem; border-radius:6px;">
                                                         <i data-lucide="trash" style="width: 16px; height: 16px;"></i>
                                                     </button>
                                                 ` : `
@@ -218,7 +323,7 @@ window.RaffleView = {
                                 
                                 ${filtered.length === 0 ? `
                                     <tr>
-                                        <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                                        <td colspan="${raffle.type === 'list' ? 6 : 5}" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
                                             No se encontraron números que coincidan con la búsqueda.
                                         </td>
                                     </tr>
@@ -248,19 +353,22 @@ window.RaffleView = {
                 innerContainer.querySelectorAll('.edit-num-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const numVal = parseInt(btn.getAttribute('data-num'), 10);
-                        openEditModalFor(numVal);
+                        const sId = parseInt(btn.getAttribute('data-seller-id'), 10);
+                        openEditModalFor(numVal, sId);
                     });
                 });
 
                 innerContainer.querySelectorAll('.clear-num-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const numVal = parseInt(btn.getAttribute('data-num'), 10);
+                        const sId = parseInt(btn.getAttribute('data-seller-id'), 10);
                         if (confirm(`¿Estás seguro de eliminar el comprador del número ${numVal}?`)) {
                             try {
                                 await window.Storage.saveTicket(raffle.id, numVal, {
                                     name: '',
                                     phone: '',
-                                    paid: false
+                                    paid: false,
+                                    sellerId: sId
                                 });
                                 window.showToast(`Se liberó el número ${numVal}`, "success");
                                 await drawRaffleUI();
@@ -279,12 +387,19 @@ window.RaffleView = {
             }
         };
 
-        const openEditModalFor = (numVal) => {
+        const openEditModalFor = (numVal, sellerIdOverride = null) => {
             const root = container.querySelector('#edit-modal-root');
-            const numberDetails = raffle.numbers[numVal];
+            const finalSellerId = sellerIdOverride !== null ? sellerIdOverride : (isCollab ? state.user.id : raffle.ownerId);
+            const ticketsArr = raffle.tickets || [];
+            
+            let numberDetails = ticketsArr.find(t => t.number === numVal && t.seller_id === finalSellerId);
+            if (!numberDetails) {
+                numberDetails = raffle.numbers[numVal] || { number: numVal, name: '', phone: '', paid: false };
+            }
             
             window.EditModal.render(root, numberDetails, async (updatedData) => {
                 const finalData = updatedData === null ? { name: '', phone: '', paid: false } : updatedData;
+                finalData.sellerId = finalSellerId;
                 
                 try {
                     await window.Storage.saveTicket(raffle.id, numVal, finalData);

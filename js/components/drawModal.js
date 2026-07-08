@@ -1,8 +1,7 @@
 // Winner / Al Agua draw component
 window.DrawModal = {
     render(container, raffle, onDrawSuccess) {
-        const numbersArr = Object.values(raffle.numbers);
-        const boughtNumbers = numbersArr.filter(n => n.name !== '' || n.phone !== '');
+        const boughtNumbers = (raffle.type === 'list' ? (raffle.tickets || []) : Object.values(raffle.numbers || {})).filter(n => n.name !== '' || n.phone !== '');
         
         container.innerHTML = `
             <div class="modal-overlay" id="draw-modal">
@@ -152,6 +151,7 @@ window.DrawModal = {
             const newDraw = {
                 type: type,
                 number: numberObj.number,
+                sellerId: numberObj.seller_id || null,
                 buyer: {
                     name: numberObj.name,
                     phone: numberObj.phone,
@@ -188,6 +188,11 @@ window.DrawModal = {
                         ${numberObj.phone ? `
                             <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.75rem; margin-bottom:0.15rem;">Contacto:</div>
                             <div class="winner-phone">${numberObj.phone}</div>
+                        ` : ''}
+
+                        ${raffle.type === 'list' ? `
+                            <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.75rem; margin-bottom:0.15rem;">Lista del Vendedor:</div>
+                            <div style="font-weight:600; color:var(--text-primary); font-size: 0.95rem;">${numberObj.seller_name || 'Organizador'}</div>
                         ` : ''}
                         
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; border-top:1px solid var(--border-color); padding-top:0.75rem; font-size:0.85rem;">

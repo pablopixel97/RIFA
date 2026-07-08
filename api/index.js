@@ -178,19 +178,29 @@ app.get('/api/public/raffles/:id', async (req, res) => {
         const raffle = await db('raffles').where({ id: raffleId }).first();
         if (!raffle) return res.status(404).json({ error: 'Rifa no encontrada' });
         
-        const tickets = await db('tickets').where('raffle_id', raffleId).orderBy('number', 'asc');
+        const tickets = await db('tickets as t')
+            .leftJoin('users as u', 'u.id', 't.seller_id')
+            .select('t.*', 'u.name as seller_name', 'u.email as seller_email')
+            .where('t.raffle_id', raffleId)
+            .orderBy('t.number', 'asc');
+            
         const draws = await db('draws').where('raffle_id', raffleId).orderBy('timestamp', 'asc');
         
-        // Hide private buyer details for public safety, only expose status
         const numbers = {};
-        tickets.forEach(t => {
+        const ticketsFormatted = tickets.map(t => {
             const isTaken = (t.name && t.name.trim() !== '') || (t.phone && t.phone.trim() !== '');
-            numbers[t.number] = {
+            const masked = {
                 number: t.number,
+                seller_id: t.seller_id,
+                seller_name: t.seller_name || t.seller_email || 'Organizador',
                 taken: isTaken,
                 name: isTaken ? (t.name.split(' ').map((w, i) => i === 0 ? w : w[0] + '.').join(' ')) : '',
                 paid: t.paid === 1 || t.paid === true
             };
+            if (raffle.type === 'single') {
+                numbers[t.number] = masked;
+            }
+            return masked;
         });
         
         const drawsFormatted = draws.map(d => ({
@@ -209,7 +219,10 @@ app.get('/api/public/raffles/:id', async (req, res) => {
             size: raffle.size,
             draw_date: raffle.draw_date,
             ticket_price: raffle.ticket_price,
+            type: raffle.type || 'single',
+            list_size: raffle.list_size || 0,
             numbers,
+            tickets: ticketsFormatted,
             draws: drawsFormatted
         });
     } catch (err) {
@@ -255,10 +268,13 @@ app.get('/api/raffles', authenticateToken, async (req, res) => {
 
 // Create raffle
 app.post('/api/raffles', authenticateToken, async (req, res) => {
-    const { id, title, size, drawDate, ticketPrice } = req.body;
+    const { id, title, size, drawDate, ticketPrice, type, listSize } = req.body;
     if (!id || !title || !size) {
         return res.status(400).json({ error: 'Datos de la rifa incompletos' });
     }
+    
+    const raffleType = type || 'single';
+    const finalSize = raffleType === 'list' ? (listSize || 100) : size;
     
     try {
         const crypto = require('crypto');
@@ -267,18 +283,21 @@ app.post('/api/raffles', authenticateToken, async (req, res) => {
         await db('raffles').insert({
             id,
             title,
-            size,
+            size: finalSize,
             draw_date: drawDate,
             ticket_price: ticketPrice || 5000,
+            type: raffleType,
+            list_size: raffleType === 'list' ? finalSize : 0,
             collaborator_key: collaboratorKey,
             user_id: req.user.id
         });
         
-        // Initialize empty tickets
+        // Initialize empty tickets for the creator
         const tickets = [];
-        for (let i = 1; i <= size; i++) {
+        for (let i = 1; i <= finalSize; i++) {
             tickets.push({
                 raffle_id: id,
+                seller_id: req.user.id,
                 number: i,
                 name: '',
                 phone: '',
@@ -359,27 +378,40 @@ app.get('/api/raffles/:id/numbers', authenticateToken, async (req, res) => {
         const access = await verifyAccess(raffleId, req);
         if (!access) return res.status(403).json({ error: 'Acceso denegado' });
         
-        const raffle = await db('raffles').select('size', 'title', 'draw_date', 'ticket_price', 'collaborator_key').where({ id: raffleId }).first();
+        const raffle = await db('raffles').select('size', 'title', 'draw_date', 'ticket_price', 'type', 'list_size', 'user_id', 'collaborator_key').where({ id: raffleId }).first();
         if (!raffle) return res.status(404).json({ error: 'Rifa no encontrada' });
         
-        const tickets = await db('tickets').where('raffle_id', raffleId).orderBy('number', 'asc');
+        let ticketsQuery = db('tickets as t')
+            .leftJoin('users as u', 'u.id', 't.seller_id')
+            .select('t.*', 'u.email as seller_email', 'u.name as seller_name')
+            .where('t.raffle_id', raffleId);
+            
+        if (!access.isOwner) {
+            ticketsQuery = ticketsQuery.andWhere('t.seller_id', req.user.id);
+        }
+        const tickets = await ticketsQuery.orderBy('t.number', 'asc');
         const draws = await db('draws').where('raffle_id', raffleId).orderBy('timestamp', 'asc');
         
-        // Construct numbers object matching the frontend structure
-        const numbers = {};
-        tickets.forEach(t => {
-            numbers[t.number] = {
-                number: t.number,
-                name: t.name,
-                phone: t.phone,
-                paid: t.paid === 1 || t.paid === true
-            };
-        });
+        const ticketsFormatted = tickets.map(t => ({
+            number: t.number,
+            seller_id: t.seller_id,
+            seller_name: t.seller_name || t.seller_email || 'Organizador',
+            name: t.name,
+            phone: t.phone,
+            paid: t.paid === 1 || t.paid === true
+        }));
         
-        // Format draws matching frontend structure
+        const numbers = {};
+        if (raffle.type === 'single' || !access.isOwner) {
+            ticketsFormatted.forEach(t => {
+                numbers[t.number] = t;
+            });
+        }
+        
         const drawsFormatted = draws.map(d => ({
             type: d.type,
             number: d.number,
+            seller_id: d.seller_id,
             buyer: {
                 name: d.buyer_name,
                 phone: d.buyer_phone,
@@ -394,8 +426,12 @@ app.get('/api/raffles/:id/numbers', authenticateToken, async (req, res) => {
             size: raffle.size,
             draw_date: raffle.draw_date,
             ticket_price: raffle.ticket_price,
+            type: raffle.type || 'single',
+            list_size: raffle.list_size || 0,
+            owner_id: raffle.user_id,
             collaborator_key: raffle.collaborator_key,
             numbers,
+            tickets: ticketsFormatted,
             draws: drawsFormatted
         });
     } catch (err) {
@@ -407,13 +443,19 @@ app.get('/api/raffles/:id/numbers', authenticateToken, async (req, res) => {
 // Update ticket (Edit Buyer)
 app.put('/api/tickets/:raffleId/:number', authenticateToken, async (req, res) => {
     const { raffleId, number } = req.params;
-    const { name, phone, paid } = req.body;
+    const { name, phone, paid, sellerId } = req.body;
     
     try {
         const access = await verifyAccess(raffleId, req);
         if (!access) return res.status(403).json({ error: 'Acceso denegado' });
         
-        await db('tickets').where({ raffle_id: raffleId, number }).update({
+        const targetSellerId = access.isOwner ? (sellerId || req.user.id) : req.user.id;
+        
+        await db('tickets').where({ 
+            raffle_id: raffleId, 
+            seller_id: targetSellerId, 
+            number: number 
+        }).update({
             name: name || '',
             phone: phone || '',
             paid: paid ? true : false
@@ -429,7 +471,7 @@ app.put('/api/tickets/:raffleId/:number', authenticateToken, async (req, res) =>
 // Draw a winner / al agua
 app.post('/api/raffles/:id/draws', authenticateToken, async (req, res) => {
     const raffleId = req.params.id;
-    const { type, number, buyer } = req.body;
+    const { type, number, buyer, sellerId } = req.body;
     
     try {
         const raffle = await db('raffles').select('id').where({ id: raffleId, user_id: req.user.id }).first();
@@ -437,6 +479,7 @@ app.post('/api/raffles/:id/draws', authenticateToken, async (req, res) => {
         
         await db('draws').insert({
             raffle_id: raffleId,
+            seller_id: sellerId || null,
             type,
             number,
             buyer_name: buyer.name || '',
@@ -536,10 +579,29 @@ app.post('/api/raffles/:id/collaborators', authenticateToken, async (req, res) =
             return res.status(400).json({ error: 'El usuario ya es colaborador de esta rifa' });
         }
         
+        const raffle = await db('raffles').where({ id: raffleId }).first();
+        if (!raffle) return res.status(404).json({ error: 'Rifa no encontrada' });
+
         await db('raffle_collaborators').insert({
             raffle_id: raffleId,
             user_id: targetUser.id
         });
+        
+        if (raffle.type === 'list') {
+            const listSize = raffle.list_size || 100;
+            const tickets = [];
+            for (let i = 1; i <= listSize; i++) {
+                tickets.push({
+                    raffle_id: raffleId,
+                    seller_id: targetUser.id,
+                    number: i,
+                    name: '',
+                    phone: '',
+                    paid: false
+                });
+            }
+            await db.batchInsert('tickets', tickets, 100);
+        }
         
         res.status(201).json({ message: 'Colaborador agregado correctamente', user: { id: targetUser.id, email: targetUser.email, name: targetUser.name } });
     } catch (err) {
@@ -560,6 +622,12 @@ app.delete('/api/raffles/:id/collaborators/:userId', authenticateToken, async (r
         }
         
         await db('raffle_collaborators').where({ raffle_id: raffleId, user_id: userId }).del();
+        
+        const raffle = await db('raffles').where({ id: raffleId }).first();
+        if (raffle && raffle.type === 'list') {
+            await db('tickets').where({ raffle_id: raffleId, seller_id: userId }).del();
+        }
+        
         res.json({ message: 'Colaborador removido exitosamente' });
     } catch (err) {
         console.error(err);

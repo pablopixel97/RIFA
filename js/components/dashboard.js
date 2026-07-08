@@ -115,9 +115,29 @@ window.Dashboard = {
                                 <input type="text" id="raffle-name-input" class="input-control" placeholder="Ej. Rifa Gran Sorteo Anual" required>
                             </div>
                             
+                            <div class="form-group" style="margin-bottom: 1.25rem;">
+                                <label style="display:block; margin-bottom:0.5rem; font-weight:600; font-size:0.9rem; color:var(--text-secondary);">Modalidad de Venta</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <label class="input-control" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.02); border-radius: 8px;">
+                                        <input type="radio" name="raffle-type" value="single" checked style="accent-color: var(--color-primary); width:16px; height:16px;">
+                                        <div>
+                                            <div style="font-weight:700; font-size:0.85rem; color:var(--text-primary);">Rifa Única</div>
+                                            <div style="font-size:0.7rem; color:var(--text-secondary);">Pozo de números único</div>
+                                        </div>
+                                    </label>
+                                    <label class="input-control" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.02); border-radius: 8px;">
+                                        <input type="radio" name="raffle-type" value="list" style="accent-color: var(--color-primary); width:16px; height:16px;">
+                                        <div>
+                                            <div style="font-weight:700; font-size:0.85rem; color:var(--text-primary);">Por Listas</div>
+                                            <div style="font-size:0.7rem; color:var(--text-secondary);">Una lista por vendedor</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                 <div class="form-group">
-                                    <label for="raffle-size-input">Cantidad de Números</label>
+                                    <label id="size-input-label" for="raffle-size-input">Cantidad de Números</label>
                                     <input type="number" id="raffle-size-input" class="input-control" value="500" min="1" max="10000" placeholder="Ej. 500" required>
                                 </div>
                                 <div class="form-group">
@@ -126,7 +146,7 @@ window.Dashboard = {
                                 </div>
                             </div>
                             
-                            <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                            <div id="create-import-container" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
                                 <label style="display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-secondary);">
                                     Importar desde archivo (Opcional)
                                 </label>
@@ -236,6 +256,26 @@ window.Dashboard = {
             sizeLabel.textContent = 'Cantidad de Números';
         };
 
+        const typeInputs = container.querySelectorAll('input[name="raffle-type"]');
+        const sizeInputLabel = container.querySelector('#size-input-label');
+        const createImportContainer = container.querySelector('#create-import-container');
+
+        typeInputs.forEach(input => {
+            input.addEventListener('change', (e) => {
+                const isList = e.target.value === 'list';
+                if (isList) {
+                    sizeInputLabel.textContent = 'Números por Lista';
+                    container.querySelector('#raffle-size-input').value = '100';
+                    createImportContainer.style.display = 'none';
+                    resetFileState();
+                } else {
+                    sizeInputLabel.textContent = 'Cantidad de Números';
+                    container.querySelector('#raffle-size-input').value = '500';
+                    createImportContainer.style.display = 'block';
+                }
+            });
+        });
+
         fileInput.addEventListener('change', (e) => {
             if (e.target.files && e.target.files[0]) {
                 updateFileUI(e.target.files[0]);
@@ -282,6 +322,7 @@ window.Dashboard = {
             const name = form.querySelector('#raffle-name-input').value.trim();
             const defaultSize = parseInt(form.querySelector('#raffle-size-input').value, 10);
             const date = form.querySelector('#raffle-date-input').value;
+            const type = form.querySelector('input[name="raffle-type"]:checked').value;
             
             try {
                 if (selectedFile) {
@@ -294,7 +335,7 @@ window.Dashboard = {
                         throw new Error("Formato de archivo no soportado. Sube un archivo Excel (.xlsx) o Word (.docx)");
                     }
                     
-                    const newRaffle = await window.Storage.createRaffle(name, parsedData.size, date);
+                    const newRaffle = await window.Storage.createRaffle(name, parsedData.size, date, 5000, 'single', 0);
                     const ticketsList = Object.values(parsedData.numbers).filter(t => t.name !== '' || t.phone !== '');
                     if (ticketsList.length > 0) {
                         const BATCH_SIZE = 50;
@@ -311,7 +352,7 @@ window.Dashboard = {
                     closeModal();
                     callbacks.onRaffleSelect(newRaffle.id);
                 } else {
-                    const newRaffle = await window.Storage.createRaffle(name, defaultSize, date);
+                    const newRaffle = await window.Storage.createRaffle(name, defaultSize, date, 5000, type, type === 'list' ? defaultSize : 0);
                     window.showToast("Rifa creada de manera manual!", 'success');
                     closeModal();
                     callbacks.onRaffleSelect(newRaffle.id);

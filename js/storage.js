@@ -72,8 +72,12 @@ window.Storage = {
                 size: detailData.size,
                 date: detailData.draw_date,
                 ticketPrice: detailData.ticket_price,
+                type: detailData.type || 'single',
+                listSize: detailData.list_size || 0,
+                ownerId: detailData.owner_id,
                 collaboratorKey: detailData.collaborator_key,
-                numbers: detailData.numbers,
+                numbers: detailData.numbers || {},
+                tickets: detailData.tickets || [],
                 draws: detailData.draws
             };
         } catch (err) {
@@ -131,7 +135,7 @@ window.Storage = {
     },
 
     // Create a new raffle (async)
-    async createRaffle(name, size, date = '', ticketPrice = 5000) {
+    async createRaffle(name, size, date = '', ticketPrice = 5000, type = 'single', listSize = 0) {
         const id = 'raffle_' + Date.now();
         const drawDate = date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         
@@ -144,18 +148,21 @@ window.Storage = {
                     title: name,
                     size,
                     drawDate,
-                    ticketPrice
+                    ticketPrice,
+                    type,
+                    listSize
                 })
             });
             if (!res.ok) throw new Error("Error creating raffle");
             
-            // Return dummy local representation to dashboard
             return {
                 id,
                 name,
-                size,
+                size: type === 'list' ? listSize : size,
                 date: drawDate,
                 ticketPrice,
+                type,
+                listSize,
                 numbers: {},
                 draws: []
             };

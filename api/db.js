@@ -57,6 +57,8 @@ async function initDb() {
             table.integer('size').notNullable();
             table.string('draw_date');
             table.integer('ticket_price').defaultTo(5000);
+            table.string('type').defaultTo('single'); // 'single' or 'list'
+            table.integer('list_size').defaultTo(0);
             table.string('collaborator_key');
             table.timestamp('created_at').defaultTo(db.fn.now());
             table.integer('user_id').unsigned().references('id').inTable('users').onDelete('SET NULL');
@@ -77,18 +79,37 @@ async function initDb() {
                 });
             }
         }
+        
+        const hasType = await db.schema.hasColumn('raffles', 'type');
+        if (!hasType) {
+            await db.schema.table('raffles', table => {
+                table.string('type').defaultTo('single');
+                table.integer('list_size').defaultTo(0);
+            });
+        }
+    }
+
+    // Recreate tickets table if it has outdated schema (migration helper)
+    if (await db.schema.hasTable('tickets') && !await db.schema.hasColumn('tickets', 'seller_id')) {
+        await db.schema.dropTable('tickets');
     }
 
     // Create tickets table
     if (!await db.schema.hasTable('tickets')) {
         await db.schema.createTable('tickets', table => {
             table.string('raffle_id').references('id').inTable('raffles').onDelete('CASCADE');
+            table.integer('seller_id').unsigned().notNullable();
             table.integer('number').notNullable();
             table.string('name').defaultTo('');
             table.string('phone').defaultTo('');
             table.boolean('paid').defaultTo(false);
-            table.primary(['raffle_id', 'number']);
+            table.primary(['raffle_id', 'seller_id', 'number']);
         });
+    }
+
+    // Recreate draws table if it has outdated schema (migration helper)
+    if (await db.schema.hasTable('draws') && !await db.schema.hasColumn('draws', 'seller_id')) {
+        await db.schema.dropTable('draws');
     }
 
     // Create draws table
@@ -96,6 +117,7 @@ async function initDb() {
         await db.schema.createTable('draws', table => {
             table.increments('id').primary();
             table.string('raffle_id').references('id').inTable('raffles').onDelete('CASCADE');
+            table.integer('seller_id').unsigned();
             table.string('type').notNullable(); // 'winner' or 'alagua'
             table.integer('number').notNullable();
             table.string('buyer_name').defaultTo('');
