@@ -5,100 +5,110 @@ window.SettingsTab = {
         
         container.innerHTML = `
             <div class="settings-grid">
-                <!-- Group 1: General Details -->
-                <div class="settings-group-panel">
-                    <h3>
-                        <i data-lucide="sliders" style="width: 18px; height: 18px;"></i>
+                <!-- Card 1: General Details -->
+                <div class="settings-group-panel" style="display:flex; flex-direction:column; gap: 1rem; background: var(--bg-card);">
+                    <h3 style="margin-top: 0; display:flex; align-items:center; gap:0.5rem;">
+                        <i data-lucide="sliders" style="width: 18px; height: 18px; color: var(--color-primary);"></i>
                         <span>Datos del Sorteo</span>
                     </h3>
-                    <form id="settings-details-form">
-                        <div class="form-group">
+                    <form id="settings-details-form" style="display:flex; flex-direction:column; gap: 1rem;">
+                        <div class="form-group" style="margin-bottom:0;">
                             <label for="settings-name-input">Nombre de la Rifa</label>
                             <input type="text" id="settings-name-input" class="input-control" value="${raffle.name}" required>
                         </div>
-                        
-                        <div class="form-group">
+                        <div class="form-group" style="margin-bottom:0;">
                             <label for="settings-date-input">Fecha del Sorteo</label>
                             <input type="date" id="settings-date-input" class="input-control" value="${raffle.date || ''}">
                         </div>
-
-                        <div class="form-group">
+                        <div class="form-group" style="margin-bottom:0;">
                             <label for="settings-price-input">Valor del Número ($)</label>
                             <input type="number" id="settings-price-input" class="input-control" value="${ticketPrice}" min="0" step="500">
                         </div>
-
-                        <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem; width: 100%;">
+                        <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem; width: 100%; display:flex; align-items:center; justify-content:center; gap:0.5rem;">
                             <i data-lucide="save" style="width: 16px; height: 16px;"></i>
                             <span>Guardar Configuración</span>
                         </button>
                     </form>
                 </div>
 
-                <!-- Group 2: Sizes & Actions -->
-                <div class="settings-group-panel" style="display:flex; flex-direction:column; justify-content:space-between;">
-                    <div>
-                        <h3>
-                            <i data-lucide="settings-2" style="width: 18px; height: 18px;"></i>
-                            <span>Administrar Números</span>
-                        </h3>
-                        <form id="settings-size-form" style="margin-bottom: 2rem;">
-                            <div class="form-group">
-                                <label for="settings-size-input">Total de Números Disponibles</label>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <input type="number" id="settings-size-input" class="input-control" value="${raffle.size}" min="1" max="10000" placeholder="Ej. 500" required style="flex:1;">
-                                    <button type="submit" class="btn btn-secondary">Actualizar</button>
-                                </div>
-                                <p style="font-size:0.75rem; color:var(--text-muted); margin-top: 0.35rem;">
-                                    Nota: Si reduces el tamaño, los números mayores con información de compradores podrían truncarse.
-                                </p>
+                <!-- Card 2: Administrar Números -->
+                <div class="settings-group-panel" style="display:flex; flex-direction:column; gap: 1rem; background: var(--bg-card);">
+                    <h3 style="margin-top: 0; display:flex; align-items:center; gap:0.5rem;">
+                        <i data-lucide="settings-2" style="width: 18px; height: 18px; color: var(--color-primary);"></i>
+                        <span>Administrar Números</span>
+                    </h3>
+                    <form id="settings-size-form" style="display:flex; flex-direction:column; gap: 1rem;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label for="settings-size-input">Total de Números Disponibles</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="number" id="settings-size-input" class="input-control" value="${raffle.size}" min="1" max="10000" placeholder="Ej. 500" required style="flex:1;">
+                                <button type="submit" class="btn btn-secondary" style="white-space:nowrap;">Actualizar</button>
                             </div>
+                            <p style="font-size:0.75rem; color:var(--text-muted); margin-top: 0.35rem; line-height:1.3;">
+                                Nota: Si reduces el tamaño, los números mayores con información de compradores podrían truncarse.
+                            </p>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Card 3: Compartir Rifa -->
+                <div class="settings-group-panel" style="display:flex; flex-direction:column; gap: 1rem; background: var(--bg-card);">
+                    <h3 style="margin-top: 0; display:flex; align-items:center; gap:0.5rem;">
+                        <i data-lucide="share-2" style="width: 18px; height: 18px; color: var(--color-primary);"></i>
+                        <span>Compartir Rifa</span>
+                    </h3>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Enlace del Visor Público</label>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 0.5rem; line-height:1.3;">
+                            Comparte este enlace con tus clientes para que vean qué números siguen disponibles en tiempo real.
+                        </p>
+                        <div class="share-url-box">
+                            <input type="text" id="share-link-input" class="input-control" value="${window.location.origin}/?raffle=${raffle.id}" readonly style="background: rgba(0,0,0,0.3); font-size:0.85rem;">
+                            <button type="button" class="btn btn-secondary" id="btn-copy-link" style="padding:0.75rem; display:flex; align-items:center; justify-content:center;">
+                                <i data-lucide="copy" style="width: 16px; height: 16px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Colaboradores -->
+                <div class="settings-group-panel" style="display:flex; flex-direction:column; gap: 1rem; background: var(--bg-card);">
+                    <h3 style="margin-top: 0; display:flex; align-items:center; gap:0.5rem;">
+                        <i data-lucide="users" style="width: 18px; height: 18px; color: var(--color-primary);"></i>
+                        <span>Colaboradores (Vendedores)</span>
+                    </h3>
+                    <div class="form-group" style="margin-bottom:0; display:flex; flex-direction:column; gap:0.75rem;">
+                        <p style="font-size:0.8rem; color:var(--text-secondary); line-height:1.3; margin:0;">
+                            Agrega a tu equipo ingresando el correo de su cuenta de RifaApp. Podrán entrar desde su propio dashboard para vender números.
+                        </p>
+                        <form id="add-collab-form" style="display: flex; gap: 0.5rem; margin-bottom: 0;">
+                            <input type="email" id="collab-email-input" class="input-control" placeholder="correo@vendedor.com" required style="font-size: 0.85rem;">
+                            <button type="submit" class="btn btn-primary" style="white-space: nowrap; font-size: 0.85rem;">
+                                Agregar
+                            </button>
                         </form>
-
-                        <h3>
-                            <i data-lucide="share-2" style="width: 18px; height: 18px;"></i>
-                            <span>Compartir Rifa</span>
-                        </h3>
-                        <div class="form-group">
-                            <label>Enlace del Visor Público</label>
-                            <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 0.5rem;">
-                                Comparte este enlace con tus clientes para que vean qué números siguen disponibles en tiempo real.
-                            </p>
-                            <div class="share-url-box">
-                                <input type="text" id="share-link-input" class="input-control" value="${window.location.origin}/?raffle=${raffle.id}" readonly style="background: rgba(0,0,0,0.3); font-size:0.85rem;">
-                                <button type="button" class="btn btn-secondary" id="btn-copy-link" style="padding:0.75rem;">
-                                    <i data-lucide="copy" style="width: 16px; height: 16px;"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <h3 style="margin-top: 2rem;">
-                            <i data-lucide="users" style="width: 18px; height: 18px;"></i>
-                            <span>Colaboradores (Vendedores)</span>
-                        </h3>
-                        <div class="form-group">
-                            <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 0.75rem;">
-                                Agrega a tu equipo ingresando el correo de su cuenta de RifaApp. Podrán entrar desde su propio dashboard para vender números.
-                            </p>
-                            <form id="add-collab-form" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
-                                <input type="email" id="collab-email-input" class="input-control" placeholder="correo@vendedor.com" required style="font-size: 0.85rem;">
-                                <button type="submit" class="btn btn-primary" style="white-space: nowrap; font-size: 0.85rem;">
-                                    Agregar
-                                </button>
-                            </form>
-                            
-                            <div id="collabs-list" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px; overflow-y: auto; padding-right: 2px;">
-                                <!-- Collaborators list rendered dynamically -->
-                            </div>
+                        
+                        <div id="collabs-list" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 180px; overflow-y: auto; padding-right: 2px;">
+                            <!-- Collaborators list rendered dynamically -->
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div style="border-top:1px solid rgba(239, 68, 68, 0.2); padding-top: 1.5rem; margin-top: 1rem;">
-                        <h4 style="color:#fca5a5; font-size:0.95rem; margin-bottom:0.5rem; font-weight:600;">Zona de Peligro</h4>
-                        <button type="button" class="btn btn-danger" id="btn-delete-raffle" style="width: 100%;">
-                            <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-                            <span>Eliminar esta Rifa Permanentemente</span>
-                        </button>
-                    </div>
+            <!-- Danger Zone (Standalone bottom panel) -->
+            <div class="settings-group-panel" style="margin-top: 1.5rem; background: rgba(239, 68, 68, 0.02); border: 1px solid rgba(239, 68, 68, 0.2); display:flex; flex-direction:column; gap:0.75rem;">
+                <h4 style="color:#fca5a5; font-size:0.95rem; margin:0; font-weight:600; display:flex; align-items:center; gap:0.5rem;">
+                    <i data-lucide="alert-triangle" style="width:16px; height:16px; color:#fca5a5;"></i>
+                    <span>Zona de Peligro</span>
+                </h4>
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+                    <p style="font-size:0.8rem; color:var(--text-secondary); margin:0;">
+                        Una vez eliminada la rifa, todos los números vendidos, recaudaciones y colaboradores serán borrados permanentemente. Esta acción no se puede deshacer.
+                    </p>
+                    <button type="button" class="btn btn-danger" id="btn-delete-raffle" style="white-space:nowrap; padding: 0.6rem 1.25rem;">
+                        <i data-lucide="trash-2" style="width: 16px; height: 16px; margin-right:0.25rem; display:inline-block; vertical-align:middle;"></i>
+                        <span>Eliminar Rifa Permanentemente</span>
+                    </button>
                 </div>
             </div>
         `;
