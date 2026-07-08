@@ -64,7 +64,7 @@ const App = {
         const isLight = this.state.theme === 'light';
 
         header.innerHTML = `
-            <div class="logo-container">
+            <div class="logo-container" id="logo-header-link" style="cursor: pointer;">
                 <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <rect width="12" height="12" x="2" y="10" rx="2" ry="2"/>
                     <path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L8.46 8"/>
@@ -73,7 +73,7 @@ const App = {
                     <path d="M15 6h.01"/>
                     <path d="M18 9h.01"/>
                 </svg>
-                <div class="logo-text">RifaApp</div>
+                <div class="logo-text">Rifapp</div>
             </div>
             <div class="nav-actions">
                 <button class="theme-toggle-btn" id="theme-toggle" title="Cambiar Tema">
@@ -94,6 +94,18 @@ const App = {
 
         if (window.lucide) {
             window.lucide.createIcons();
+        }
+
+        const logoLink = header.querySelector('#logo-header-link');
+        if (logoLink) {
+            logoLink.addEventListener('click', () => {
+                if (this.state.user) {
+                    this.state.currentView = 'dashboard';
+                    this.state.selectedRaffleId = null;
+                    this.renderHeader();
+                    this.navigate();
+                }
+            });
         }
 
         const toggle = header.querySelector('#theme-toggle');

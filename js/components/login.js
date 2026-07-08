@@ -15,7 +15,7 @@ window.Login = {
                             <path d="M15 6h.01"/>
                             <path d="M18 9h.01"/>
                         </svg>
-                        <h2>${isSignupMode ? 'Crear Cuenta RifaApp' : 'Acceso RifaApp'}</h2>
+                        <h2>${isSignupMode ? 'Crear Cuenta Rifapp' : 'Acceso Rifapp'}</h2>
                         <p>${isSignupMode ? 'Regístrate para comenzar a gestionar tus rifas' : 'Inicia sesión para administrar tus rifas'}</p>
                         
                         <form id="auth-form">
