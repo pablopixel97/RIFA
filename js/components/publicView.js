@@ -67,21 +67,25 @@ window.PublicView = {
             container.innerHTML = `
                 <div class="raffle-view-container">
                     <!-- Header Banner -->
-                    <div class="raffle-detail-header" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%);">
+                    <div class="raffle-detail-header">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; width: 100%;">
-                            <div>
-                                <span class="badge badge-paid" style="margin-bottom: 0.5rem; display: inline-flex; align-items: center; gap: 0.25rem;">
-                                    <i data-lucide="eye" style="width:12px; height:12px;"></i> Visor Público
-                                </span>
-                                <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary);">${raffle.title}</h1>
-                                <p style="color: var(--text-secondary); font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                                    <i data-lucide="calendar" style="width: 16px; height: 16px;"></i>
-                                    Sorteo: <strong style="color: var(--text-primary);">${drawDateFormatted}</strong>
-                                </p>
-                                <p style="color: var(--text-secondary); font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i data-lucide="dollar-sign" style="width: 16px; height: 16px;"></i>
-                                    Valor del Número: <strong style="color: var(--color-success);">$${raffle.ticket_price.toLocaleString('es-CL')} CLP</strong>
-                                </p>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span class="badge badge-paid" style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.75rem;">
+                                        <i data-lucide="eye" style="width:12px; height:12px;"></i> Visor Público
+                                    </span>
+                                </div>
+                                <h1 style="font-size: 2.25rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; margin: 0.25rem 0;">${raffle.title}</h1>
+                                <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 0.25rem; font-size: 0.95rem; color: var(--text-secondary);">
+                                    <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i data-lucide="calendar" style="width: 18px; height: 18px; color: var(--color-primary);"></i>
+                                        <span>Sorteo: <strong style="color: var(--text-primary);">${drawDateFormatted}</strong></span>
+                                    </span>
+                                    <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i data-lucide="dollar-sign" style="width: 18px; height: 18px; color: var(--color-success);"></i>
+                                        <span>Valor del Número: <strong style="color: var(--color-success);">$${raffle.ticket_price.toLocaleString('es-CL')} CLP</strong></span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
