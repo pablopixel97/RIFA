@@ -66,7 +66,7 @@ app.use(checkDbInit);
 
 // Register
 app.post('/api/auth/register', async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, name } = req.body;
     if (!email || !password) {
         return res.status(400).json({ error: 'Correo y contraseña son requeridos' });
     }
@@ -77,12 +77,13 @@ app.post('/api/auth/register', async (req, res) => {
     try {
         const [insertedUser] = await db('users').insert({
             email,
+            name: name || '',
             password_hash: hash
         }).returning('id');
         
         const userId = typeof insertedUser === 'object' ? insertedUser.id : insertedUser;
         const token = jwt.sign({ id: userId, email }, JWT_SECRET, { expiresIn: '24h' });
-        res.status(201).json({ token, email });
+        res.status(201).json({ token, email, name: name || email });
     } catch (err) {
         if (err.message.includes('UNIQUE') || err.message.includes('unique')) {
             return res.status(400).json({ error: 'El correo electrónico ya está registrado' });
@@ -107,7 +108,7 @@ app.post('/api/auth/login', async (req, res) => {
         if (!isMatch) return res.status(400).json({ error: 'Credenciales inválidas' });
         
         const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
-        res.json({ token, email: user.email });
+        res.json({ token, email: user.email, name: user.name || user.email });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Error en el servidor' });

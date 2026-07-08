@@ -33,9 +33,18 @@ async function initDb() {
         await db.schema.createTable('users', table => {
             table.increments('id').primary();
             table.string('email').unique().notNullable();
+            table.string('name').defaultTo('');
             table.string('password_hash').notNullable();
             table.timestamp('created_at').defaultTo(db.fn.now());
         });
+    } else {
+        // Add name column if it doesn't exist (migration for existing DBs)
+        const hasName = await db.schema.hasColumn('users', 'name');
+        if (!hasName) {
+            await db.schema.table('users', table => {
+                table.string('name').defaultTo('');
+            });
+        }
     }
 
     // Create raffles table
@@ -89,6 +98,7 @@ async function initDb() {
         
         await db('users').insert({
             email: defaultEmail,
+            name: 'Administrador',
             password_hash: hash
         });
         console.log("Default admin account created: admin@rifa.com / admin123");

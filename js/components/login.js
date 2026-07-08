@@ -18,6 +18,12 @@ window.Login = {
                                 <label for="username">Usuario (Email)</label>
                                 <input type="email" id="username" class="input-control" value="${isSignupMode ? '' : 'admin@rifa.com'}" placeholder="ejemplo@rifa.com" required autocomplete="username">
                             </div>
+                            ${isSignupMode ? `
+                            <div class="form-group">
+                                <label for="fullname">Nombre completo</label>
+                                <input type="text" id="fullname" class="input-control" placeholder="Ej: Santiago García" required autocomplete="name">
+                            </div>
+                            ` : ''}
                             <div class="form-group">
                                 <label for="password">Contraseña</label>
                                 <input type="password" id="password" class="input-control" value="${isSignupMode ? '' : 'admin123'}" placeholder="••••••••" required autocomplete="current-password">
@@ -45,9 +51,9 @@ window.Login = {
                 window.lucide.createIcons();
             }
 
-            const form = container.querySelector('#auth-form');
-            const errorDiv = container.querySelector('#auth-error');
-            const toggleBtn = container.querySelector('#toggle-mode-btn');
+            const form = document.getElementById('auth-form');
+            const errorDiv = document.getElementById('auth-error');
+            const toggleBtn = document.getElementById('toggle-mode-btn');
 
             toggleBtn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -57,19 +63,20 @@ window.Login = {
 
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const email = form.username.value.trim();
-                const password = form.password.value;
+                const email = form.querySelector('#username').value.trim();
+                const password = form.querySelector('#password').value;
+                const fullnameInput = form.querySelector('#fullname');
+                const fullname = fullnameInput ? fullnameInput.value.trim() : '';
                 errorDiv.style.display = 'none';
 
                 const endpoint = isSignupMode ? '/api/auth/register' : '/api/auth/login';
+                const bodyData = isSignupMode ? { email, password, name: fullname } : { email, password };
 
                 try {
                     const res = await fetch(endpoint, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ email, password })
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(bodyData)
                     });
 
                     const data = await res.json();
@@ -78,14 +85,15 @@ window.Login = {
                         throw new Error(data.error || 'Ocurrió un error en la autenticación');
                     }
 
-                    // Save session
-                    window.Storage.saveSession(data.email, data.token);
+                    // Save session: persist email, token, and display name
+                    const displayName = data.name || fullname || data.email;
+                    window.Storage.saveSession(data.email, data.token, displayName);
 
                     // Check and run data migration from localStorage to SQL
                     await window.Storage.checkAndMigrateLocalData();
 
                     // Trigger callback
-                    onLoginSuccess({ username: data.email });
+                    onLoginSuccess({ username: displayName, email: data.email });
 
                 } catch (err) {
                     errorDiv.textContent = err.message;
