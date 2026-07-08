@@ -75,7 +75,7 @@ window.PublicView = {
                                         <i data-lucide="eye" style="width:12px; height:12px;"></i> Visor Público
                                     </span>
                                 </div>
-                                <h1 style="font-size: 2.25rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; margin: 0.25rem 0;">${raffle.title}</h1>
+                                <h1 style="font-size: 2.25rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; margin: 0.25rem 0;">${window.escapeHTML(raffle.title)}</h1>
                                 <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 0.25rem; font-size: 0.95rem; color: var(--text-secondary);">
                                     <span style="display: flex; align-items: center; gap: 0.5rem;">
                                         <i data-lucide="calendar" style="width: 18px; height: 18px; color: var(--color-primary);"></i>
@@ -109,7 +109,7 @@ window.PublicView = {
                                             </div>
                                             <div style="font-size: 0.85rem; color: var(--text-secondary);">
                                                 Número: <strong style="color: var(--color-primary); font-size: 0.95rem;">${d.number}</strong> 
-                                                ${d.buyer.name ? `(${d.buyer.name})` : '(No vendido)'}
+                                                ${d.buyer.name ? `(${window.escapeHTML(d.buyer.name)})` : '(No vendido)'}
                                             </div>
                                         </div>
                                     </div>
@@ -164,7 +164,7 @@ window.PublicView = {
                                 <select id="public-seller-select" class="input-control" style="background:rgba(255,255,255,0.03); cursor:pointer; font-size:0.85rem;">
                                     ${sellers.map(s => `
                                         <option value="${s.id}" ${s.id === selectedSellerId ? 'selected' : ''}>
-                                            ${s.name} (${s.tickets.filter(t => t.taken).length}/${s.tickets.length} vendidos)
+                                            ${window.escapeHTML(s.name)} (${s.tickets.filter(t => t.taken).length}/${s.tickets.length} vendidos)
                                         </option>
                                     `).join('')}
                                 </select>
@@ -220,7 +220,7 @@ window.PublicView = {
                     item.style.cursor = 'default';
                     item.innerHTML = `
                         <div class="number-num">${t.number}</div>
-                        ${t.taken ? `<span class="number-card-buyer-preview">${t.name}</span>` : ''}
+                        ${t.taken ? `<span class="number-card-buyer-preview">${window.escapeHTML(t.name)}</span>` : ''}
                     `;
                     
                     gridContainer.appendChild(item);

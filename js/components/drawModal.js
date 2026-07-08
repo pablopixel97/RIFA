@@ -183,16 +183,16 @@ window.DrawModal = {
                     
                     <div style="background: var(--bg-panel-inner); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; margin: 1.5rem 0; text-align: left;">
                         <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.25rem;">Comprador:</div>
-                        <div class="winner-name">${numberObj.name || '<em style="color:var(--text-muted);">Sin Nombre</em>'}</div>
+                        <div class="winner-name">${numberObj.name ? window.escapeHTML(numberObj.name) : '<em style="color:var(--text-muted);">Sin Nombre</em>'}</div>
                         
                         ${numberObj.phone ? `
                             <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.75rem; margin-bottom:0.15rem;">Contacto:</div>
-                            <div class="winner-phone">${numberObj.phone}</div>
+                            <div class="winner-phone">${window.escapeHTML(numberObj.phone)}</div>
                         ` : ''}
 
                         ${raffle.type === 'list' ? `
                             <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.75rem; margin-bottom:0.15rem;">Lista del Vendedor:</div>
-                            <div style="font-weight:600; color:var(--text-primary); font-size: 0.95rem;">${numberObj.seller_name || 'Organizador'}</div>
+                            <div style="font-weight:600; color:var(--text-primary); font-size: 0.95rem;">${window.escapeHTML(numberObj.seller_name || 'Organizador')}</div>
                         ` : ''}
                         
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; border-top:1px solid var(--border-color); padding-top:0.75rem; font-size:0.85rem;">

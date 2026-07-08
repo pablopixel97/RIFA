@@ -67,7 +67,7 @@ window.Dashboard = {
                         <div class="raffle-card" data-id="${r.id}" data-collab="${!!r.is_collaborator}">
                             <div class="raffle-card-top">
                                 <div class="raffle-name" style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                                    <span>${r.title}</span>
+                                    <span>${window.escapeHTML(r.title)}</span>
                                     ${r.is_collaborator ? `<span class="badge" style="background:rgba(168,85,247,0.12); color:#c084fc; border:1px solid rgba(168,85,247,0.25); font-size:0.7rem; padding:0.15rem 0.45rem; border-radius:12px;">Colaborador</span>` : ''}
                                 </div>
                                 <span class="badge ${r.size <= 200 ? 'badge-available' : 'badge-paid'}">${r.size} Núm.</span>

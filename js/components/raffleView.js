@@ -212,7 +212,7 @@ window.RaffleView = {
                                             <div style="flex:1; min-width: 200px;">
                                                 <div style="font-weight:700; font-size:0.95rem; color:var(--text-primary); margin-bottom:0.25rem; display:flex; align-items:center; gap:0.5rem;">
                                                     <i data-lucide="user" style="width:16px;height:16px;color:var(--text-secondary);"></i>
-                                                    <span>${s.sellerName}</span>
+                                                    <span>${window.escapeHTML(s.sellerName)}</span>
                                                     ${s.sellerId === raffle.ownerId ? `<span class="badge" style="background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(59,130,246,0.25); font-size:0.7rem; padding:0.15rem 0.4rem; border-radius:10px; font-weight:normal;">Organizador</span>` : ''}
                                                 </div>
                                                 <div style="font-size:0.8rem; color:var(--text-secondary); display:flex; gap:1.5rem; margin-bottom:0.4rem;">
@@ -223,7 +223,7 @@ window.RaffleView = {
                                                     <div class="progress-bar" style="width: ${sPercent}%;"></div>
                                                 </div>
                                             </div>
-                                            <button class="btn btn-secondary btn-view-seller-list" data-seller-id="${s.sellerId}" data-seller-name="${s.sellerName}" style="font-size:0.8rem; padding:0.5rem 1rem;">
+                                            <button class="btn btn-secondary btn-view-seller-list" data-seller-id="${s.sellerId}" data-seller-name="${window.escapeHTML(s.sellerName)}" style="font-size:0.8rem; padding:0.5rem 1rem;">
                                                 <i data-lucide="eye" style="width:16px;height:16px;margin-right:0.35rem;"></i>
                                                 <span>Ver Talonario</span>
                                             </button>
@@ -279,7 +279,7 @@ window.RaffleView = {
                                         <i data-lucide="chevron-left" style="width:16px;height:16px;margin-right:0.15rem;"></i>
                                         <span>Atrás</span>
                                     </button>
-                                    <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:var(--text-primary);">Lista de: <span style="color:var(--color-primary);">${selectedSellerName}</span></h3>
+                                    <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:var(--text-primary);">Lista de: <span style="color:var(--color-primary);">${window.escapeHTML(selectedSellerName)}</span></h3>
                                 </div>
                             </div>
                         ` : ''}
@@ -298,9 +298,9 @@ window.RaffleView = {
                                 }
                                 
                                 return `
-                                    <div class="number-card ${stateClass} ${unpaidClass}" data-num="${num.number}" title="${isBought ? `${num.name} ${num.phone ? `(${num.phone})` : ''} - ${num.paid ? 'Pagado' : 'Pendiente'}` : 'Disponible'}">
+                                    <div class="number-card ${stateClass} ${unpaidClass}" data-num="${num.number}" title="${isBought ? `${window.escapeHTML(num.name)} ${num.phone ? `(${window.escapeHTML(num.phone)})` : ''} - ${num.paid ? 'Pagado' : 'Pendiente'}` : 'Disponible'}">
                                         <span>${num.number}</span>
-                                        ${isBought ? `<span class="number-card-buyer-preview">${num.name || num.phone}</span>` : ''}
+                                        ${isBought ? `<span class="number-card-buyer-preview">${window.escapeHTML(num.name || num.phone)}</span>` : ''}
                                     </div>
                                 `;
                             }).join('')}
@@ -364,9 +364,9 @@ window.RaffleView = {
                                     return `
                                         <tr>
                                             <td style="text-align: center;"><strong style="font-size: 1.1rem; color: var(--color-primary);">${num.number}</strong></td>
-                                            ${raffle.type === 'list' ? `<td><strong>${num.seller_name}</strong></td>` : ''}
-                                            <td>${num.name || '<span style="color:var(--text-muted); font-style:italic;">Disponible</span>'}</td>
-                                            <td style="white-space: nowrap;">${num.phone || '<span style="color:var(--text-muted); font-style:italic;">-</span>'}</td>
+                                            ${raffle.type === 'list' ? `<td><strong>${window.escapeHTML(num.seller_name)}</strong></td>` : ''}
+                                            <td>${num.name ? window.escapeHTML(num.name) : '<span style="color:var(--text-muted); font-style:italic;">Disponible</span>'}</td>
+                                            <td style="white-space: nowrap;">${num.phone ? window.escapeHTML(num.phone) : '<span style="color:var(--text-muted); font-style:italic;">-</span>'}</td>
                                             <td>${badgeHtml}</td>
                                             <td style="text-align: right;">
                                                 <button class="btn btn-secondary btn-icon edit-num-btn" data-num="${num.number}" data-seller-id="${num.seller_id}" title="Editar comprador" style="padding: 0.4rem; border-radius:6px; margin-right:5px;">

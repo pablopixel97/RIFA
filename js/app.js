@@ -1,3 +1,14 @@
+// HTML escaping helper to prevent Stored XSS vulnerabilities
+window.escapeHTML = (str) => {
+    if (!str) return '';
+    return str.toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+};
+
 // Main Application Router
 const App = {
     state: {
