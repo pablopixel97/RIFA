@@ -75,10 +75,16 @@ window.RaffleView = {
                         ${activeView === 'list' ? `
                             <input type="text" id="search-numbers-input" class="input-control search-bar" placeholder="Buscar por número, nombre o fono..." value="${searchQuery}">
                         ` : `
-                            <div style="display: flex; gap: 1rem; font-size: 0.85rem; color: var(--text-secondary);">
+                            <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.85rem; color: var(--text-secondary); flex-wrap: wrap;">
                                 <span>Vendidos: <strong style="color:var(--text-primary);">${soldCount}</strong></span>
                                 <span>Disponibles: <strong style="color:var(--text-primary);">${availableCount}</strong></span>
                                 <span>Pagados: <strong style="color:var(--color-success);">${paidCount}</strong></span>
+                                ${isCollab ? '' : `
+                                    <button class="btn btn-secondary" id="btn-quick-add-single-collab" style="font-size:0.75rem; padding:0.3rem 0.6rem; display:flex; align-items:center; gap:0.25rem; font-weight:600; border:1px solid rgba(255,255,255,0.12); margin-left: 0.5rem;" title="Agregar colaboradores a este sorteo">
+                                        <i data-lucide="user-plus" style="width: 12px; height: 12px;"></i>
+                                        <span>+ Vendedor</span>
+                                    </button>
+                                `}
                             </div>
                         `}
                     </div>
@@ -106,6 +112,28 @@ window.RaffleView = {
                         drawRaffleUI();
                     });
                 });
+
+                const quickAddSingleBtn = container.querySelector('#btn-quick-add-single-collab');
+                if (quickAddSingleBtn) {
+                    quickAddSingleBtn.addEventListener('click', async () => {
+                        const email = prompt("Ingresa el correo electrónico del vendedor registrado en RifaApp:");
+                        if (email && email.trim() !== '') {
+                            try {
+                                quickAddSingleBtn.disabled = true;
+                                quickAddSingleBtn.textContent = 'Agregando...';
+                                await window.Storage.addCollaborator(raffle.id, email.toLowerCase().trim());
+                                window.showToast("¡Vendedor agregado correctamente!", "success");
+                                await drawRaffleUI();
+                            } catch (err) {
+                                window.showToast(err.message, "danger");
+                            } finally {
+                                quickAddSingleBtn.disabled = false;
+                                quickAddSingleBtn.innerHTML = `<i data-lucide="user-plus" style="width: 12px; height: 12px;"></i><span>+ Vendedor</span>`;
+                                if (window.lucide) window.lucide.createIcons();
+                            }
+                        }
+                    });
+                }
             }
 
             const viewBtns = container.querySelectorAll('.view-btn');
