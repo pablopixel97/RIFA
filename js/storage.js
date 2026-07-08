@@ -183,16 +183,20 @@ window.Storage = {
         }
     },
 
-    // Bulk update tickets (Excel upload)
+    // Bulk update tickets (Excel upload) - splits into batches to avoid Vercel timeout
     async importTickets(raffleId, ticketsList) {
+        const BATCH_SIZE = 50;
         try {
-            const res = await fetch(`/api/raffles/${raffleId}/import`, {
-                method: 'POST',
-                headers: this.getHeaders(),
-                body: JSON.stringify({ ticketsList })
-            });
-            if (!res.ok) throw new Error("Error importing tickets");
-            return await res.json();
+            for (let i = 0; i < ticketsList.length; i += BATCH_SIZE) {
+                const batch = ticketsList.slice(i, i + BATCH_SIZE);
+                const res = await fetch(`/api/raffles/${raffleId}/import`, {
+                    method: 'POST',
+                    headers: this.getHeaders(),
+                    body: JSON.stringify({ ticketsList: batch })
+                });
+                if (!res.ok) throw new Error("Error importing tickets batch");
+            }
+            return { success: true };
         } catch (err) {
             console.error(err);
             throw err;

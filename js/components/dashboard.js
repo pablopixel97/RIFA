@@ -258,8 +258,15 @@ window.Dashboard = {
                     const newRaffle = await window.Storage.createRaffle(name, parsedData.size, date);
                     const ticketsList = Object.values(parsedData.numbers).filter(t => t.name !== '' || t.phone !== '');
                     if (ticketsList.length > 0) {
+                        const BATCH_SIZE = 50;
+                        for (let i = 0; i < ticketsList.length; i += BATCH_SIZE) {
+                            const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+                            const totalBatches = Math.ceil(ticketsList.length / BATCH_SIZE);
+                            submitBtn.textContent = `Importando... (${batchNum}/${totalBatches})`;
+                        }
                         await window.Storage.importTickets(newRaffle.id, ticketsList);
                     }
+
                     
                     window.showToast(`Rifa creada exitosamente con ${parsedData.size} números importados!`, 'success');
                     closeModal();
