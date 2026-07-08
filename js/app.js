@@ -126,6 +126,25 @@ const App = {
         const urlParams = new URLSearchParams(window.location.search);
         const raffleId = urlParams.get('raffle');
         
+        if (this.state.user) {
+            fetch('/api/auth/me', {
+                headers: window.Storage.getHeaders()
+            })
+            .then(res => {
+                if (res.ok) return res.json();
+                throw new Error("Invalid token");
+            })
+            .then(data => {
+                if (data && data.id) {
+                    this.state.user.id = data.id;
+                    localStorage.setItem('rifa_session_id', String(data.id));
+                }
+            })
+            .catch(err => {
+                console.warn("Failed to check session profile:", err);
+            });
+        }
+        
         if (raffleId) {
             this.state.currentView = 'public-view';
             this.state.selectedRaffleId = raffleId;

@@ -19,14 +19,17 @@ window.Storage = {
         const email = localStorage.getItem('rifa_session_email');
         const token = this.getToken();
         const name = localStorage.getItem('rifa_session_name');
-        return (email && token) ? { email, username: name || email } : null;
+        const idStr = localStorage.getItem('rifa_session_id');
+        const id = idStr ? parseInt(idStr, 10) : null;
+        return (email && token) ? { id, email, username: name || email } : null;
     },
 
     // Save session
-    saveSession(email, token, name) {
+    saveSession(email, token, name, id) {
         localStorage.setItem('rifa_session_email', email);
         localStorage.setItem('rifa_jwt_token', token);
         if (name) localStorage.setItem('rifa_session_name', name);
+        if (id) localStorage.setItem('rifa_session_id', String(id));
     },
 
     // Clear session
@@ -34,6 +37,7 @@ window.Storage = {
         localStorage.removeItem('rifa_session_email');
         localStorage.removeItem('rifa_jwt_token');
         localStorage.removeItem('rifa_session_name');
+        localStorage.removeItem('rifa_session_id');
     },
 
     // Get all raffles (async)

@@ -92,15 +92,15 @@ window.Login = {
                         throw new Error(data.error || 'Ocurrió un error en la autenticación');
                     }
 
-                    // Save session: persist email, token, and display name
+                    // Save session: persist email, token, display name, and user ID
                     const displayName = data.name || fullname || data.email;
-                    window.Storage.saveSession(data.email, data.token, displayName);
+                    window.Storage.saveSession(data.email, data.token, displayName, data.id);
 
                     // Check and run data migration from localStorage to SQL
                     await window.Storage.checkAndMigrateLocalData();
 
                     // Trigger callback
-                    onLoginSuccess({ username: displayName, email: data.email });
+                    onLoginSuccess({ id: data.id, username: displayName, email: data.email });
 
                 } catch (err) {
                     errorDiv.textContent = err.message;
