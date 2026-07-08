@@ -1150,3 +1150,48 @@ input:checked + .slider:before {
 .stat-item-row:last-child {
     border-bottom: none;
 }
+
+/* Responsive Header User Badge Styles */
+.header-user-badge {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-card);
+    padding: 0.4rem 0.8rem;
+    border-radius: 30px;
+    border: 1px solid var(--border-color);
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.header-user-name {
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .nav-actions {
+        gap: 0.5rem;
+    }
+    
+    .header-user-name {
+        display: none; /* Hide full username on mobile to prevent overflow */
+    }
+    
+    .header-user-badge {
+        padding: 0.5rem;
+        border-radius: 50%;
+        justify-content: center;
+        aspect-ratio: 1;
+    }
+}

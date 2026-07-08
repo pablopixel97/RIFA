@@ -80,9 +80,9 @@ const App = {
                     <i data-lucide="${isLight ? 'moon' : 'sun'}" style="width: 20px; height: 20px;"></i>
                 </button>
                 ${this.state.user ? `
-                    <span style="font-size:0.9rem; font-weight:600; color:var(--text-secondary); display:flex; align-items:center; gap:0.5rem; background:var(--bg-card); padding:0.4rem 0.8rem; border-radius:30px; border:1px solid var(--border-color);">
+                    <span class="header-user-badge">
                         <i data-lucide="user" style="width:14px; height:14px;"></i>
-                        <span>${this.state.user.username}</span>
+                        <span class="header-user-name">${this.state.user.username}</span>
                     </span>
                     <button class="btn btn-secondary" id="btn-logout" style="padding:0.4rem 0.8rem; font-size:0.85rem;">
                         <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
