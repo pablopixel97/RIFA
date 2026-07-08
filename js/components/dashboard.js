@@ -160,6 +160,11 @@ window.Dashboard = {
                                 </div>
                             </div>
                             
+                            <div class="form-group" style="margin-top: 1rem; margin-bottom: 0;">
+                                <label for="raffle-price-input">Valor del Número ($)</label>
+                                <input type="number" id="raffle-price-input" class="input-control" value="5000" min="0" step="500" placeholder="Ej. 5000" required>
+                            </div>
+                            
                             <div id="create-import-container" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
                                 <label style="display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-secondary);">
                                     Importar desde archivo (Opcional)
@@ -337,6 +342,7 @@ window.Dashboard = {
             const defaultSize = parseInt(form.querySelector('#raffle-size-input').value, 10);
             const date = form.querySelector('#raffle-date-input').value;
             const type = form.querySelector('input[name="raffle-type"]:checked').value;
+            const price = parseInt(form.querySelector('#raffle-price-input').value, 10) || 5000;
             
             try {
                 if (selectedFile) {
@@ -349,7 +355,7 @@ window.Dashboard = {
                         throw new Error("Formato de archivo no soportado. Sube un archivo Excel (.xlsx) o Word (.docx)");
                     }
                     
-                    const newRaffle = await window.Storage.createRaffle(name, parsedData.size, date, 5000, 'single', 0);
+                    const newRaffle = await window.Storage.createRaffle(name, parsedData.size, date, price, 'single', 0);
                     const ticketsList = Object.values(parsedData.numbers).filter(t => t.name !== '' || t.phone !== '');
                     if (ticketsList.length > 0) {
                         const BATCH_SIZE = 50;
@@ -366,7 +372,7 @@ window.Dashboard = {
                     closeModal();
                     callbacks.onRaffleSelect(newRaffle.id);
                 } else {
-                    const newRaffle = await window.Storage.createRaffle(name, defaultSize, date, 5000, type, type === 'list' ? defaultSize : 0);
+                    const newRaffle = await window.Storage.createRaffle(name, defaultSize, date, price, type, type === 'list' ? defaultSize : 0);
                     window.showToast("Rifa creada de manera manual!", 'success');
                     closeModal();
                     callbacks.onRaffleSelect(newRaffle.id);
