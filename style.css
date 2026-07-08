@@ -136,6 +136,11 @@ body {
     100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
 }
 
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 /* App Container */
 #app {
     display: flex;

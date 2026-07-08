@@ -38,16 +38,22 @@ window.Storage = {
 
     // Get all raffles (async)
     async getRaffles() {
-        try {
-            const res = await fetch('/api/raffles', {
-                headers: this.getHeaders()
-            });
-            if (!res.ok) throw new Error("Error fetching raffles");
-            return await res.json();
-        } catch (err) {
-            console.error(err);
-            return [];
+        const res = await fetch('/api/raffles', {
+            headers: this.getHeaders()
+        });
+        if (res.status === 401 || res.status === 403) {
+            // Token expired or invalid - force logout
+            this.clearSession();
+            const err = new Error('SESSION_EXPIRED');
+            err.status = res.status;
+            throw err;
         }
+        if (!res.ok) {
+            const err = new Error(`Error fetching raffles (${res.status})`);
+            err.status = res.status;
+            throw err;
+        }
+        return await res.json();
     },
 
     // Get a specific raffle (and its tickets/draws)

@@ -1,8 +1,48 @@
 // Dashboard Component
 window.Dashboard = {
     async render(container, state, callbacks) {
-        const raffles = await window.Storage.getRaffles();
-        
+        // Show loading state first
+        container.innerHTML = `
+            <div style="display:flex; align-items:center; justify-content:center; height:60vh; flex-direction:column; gap:1rem; color:var(--text-secondary);">
+                <i data-lucide="loader-circle" style="width:40px;height:40px;animation:spin 1s linear infinite;"></i>
+                <span>Cargando sorteos...</span>
+            </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+
+        let raffles;
+        try {
+            raffles = await window.Storage.getRaffles();
+        } catch (err) {
+            console.error('Dashboard load error:', err);
+            if (err.message === 'SESSION_EXPIRED') {
+                // Redirect to login automatically
+                state.user = null;
+                state.currentView = 'login';
+                if (window.App) { window.App.renderHeader(); window.App.navigate(); }
+                return;
+            }
+            // Show error with retry button
+            container.innerHTML = `
+                <div style="display:flex; align-items:center; justify-content:center; height:60vh; flex-direction:column; gap:1.5rem; color:var(--text-secondary); text-align:center;">
+                    <i data-lucide="wifi-off" style="width:48px;height:48px; color:var(--color-danger);"></i>
+                    <div>
+                        <p style="font-size:1.1rem; font-weight:600; margin-bottom:0.5rem;">Error al cargar los sorteos</p>
+                        <p style="font-size:0.85rem;">${err.message}</p>
+                    </div>
+                    <button class="btn btn-primary" id="retry-btn">
+                        <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
+                        <span>Reintentar</span>
+                    </button>
+                </div>
+            `;
+            if (window.lucide) window.lucide.createIcons();
+            document.getElementById('retry-btn').addEventListener('click', () => {
+                window.Dashboard.render(container, state, callbacks);
+            });
+            return;
+        }
+
         container.innerHTML = `
             <div class="dashboard-header">
                 <div class="dashboard-title">

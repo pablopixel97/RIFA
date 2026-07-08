@@ -160,5 +160,6 @@ const App = {
 
 // Initialize App when DOM loaded
 document.addEventListener('DOMContentLoaded', () => {
+    window.App = App;
     App.init();
 });
