@@ -7,7 +7,7 @@ const { db, initDb, isPostgres } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = 'rifa_app_secret_key_12345'; // Simple JWT secret key
+const JWT_SECRET = process.env.JWT_SECRET || 'rifa_app_secret_key_12345'; // Process env key with fallback
 
 app.use(cors());
 app.use(express.json());
@@ -91,10 +91,10 @@ app.post('/api/auth/register', async (req, res) => {
         return res.status(400).json({ error: 'Correo y contraseña son requeridos' });
     }
     
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(password, salt);
-    
     try {
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(password, salt);
+        
         const [insertedUser] = await db('users').insert({
             email,
             name: name || '',
@@ -124,7 +124,7 @@ app.post('/api/auth/login', async (req, res) => {
         const user = await db('users').where({ email }).first();
         if (!user) return res.status(400).json({ error: 'Credenciales inválidas' });
         
-        const isMatch = bcrypt.compareSync(password, user.password_hash);
+        const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) return res.status(400).json({ error: 'Credenciales inválidas' });
         
         const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
@@ -507,16 +507,20 @@ app.post('/api/raffles/:id/import', authenticateToken, async (req, res) => {
         const access = await verifyAccess(raffleId, req);
         if (!access) return res.status(403).json({ error: 'Acceso denegado' });
         
-        // Execute inside transaction for atomicity and speed
+        // Execute inside transaction for atomicity and speed, processing updates in concurrent chunks of 50
         await db.transaction(async trx => {
-            for (const t of ticketsList) {
-                await trx('tickets')
-                    .where({ raffle_id: raffleId, number: t.number })
-                    .update({
-                        name: t.name || '',
-                        phone: t.phone || '',
-                        paid: t.paid ? true : false
-                    });
+            const batchSize = 50;
+            for (let i = 0; i < ticketsList.length; i += batchSize) {
+                const chunk = ticketsList.slice(i, i + batchSize);
+                await Promise.all(chunk.map(t => {
+                    return trx('tickets')
+                        .where({ raffle_id: raffleId, seller_id: req.user.id, number: t.number })
+                        .update({
+                            name: t.name || '',
+                            phone: t.phone || '',
+                            paid: t.paid ? true : false
+                        });
+                }));
             }
         });
         

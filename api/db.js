@@ -98,7 +98,7 @@ async function initDb() {
     if (!await db.schema.hasTable('tickets')) {
         await db.schema.createTable('tickets', table => {
             table.string('raffle_id').references('id').inTable('raffles').onDelete('CASCADE');
-            table.integer('seller_id').unsigned().notNullable();
+            table.integer('seller_id').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
             table.integer('number').notNullable();
             table.string('name').defaultTo('');
             table.string('phone').defaultTo('');
@@ -117,7 +117,7 @@ async function initDb() {
         await db.schema.createTable('draws', table => {
             table.increments('id').primary();
             table.string('raffle_id').references('id').inTable('raffles').onDelete('CASCADE');
-            table.integer('seller_id').unsigned();
+            table.integer('seller_id').unsigned().references('id').inTable('users').onDelete('SET NULL');
             table.string('type').notNullable(); // 'winner' or 'alagua'
             table.integer('number').notNullable();
             table.string('buyer_name').defaultTo('');
@@ -143,8 +143,8 @@ async function initDb() {
     if (count === 0) {
         const defaultEmail = 'admin@rifa.com';
         const defaultPassword = 'admin123';
-        const salt = bcrypt.genSaltSync(10);
-        const hash = bcrypt.hashSync(defaultPassword, salt);
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(defaultPassword, salt);
         
         await db('users').insert({
             email: defaultEmail,
