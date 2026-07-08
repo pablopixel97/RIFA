@@ -1,0 +1,281 @@
+// Dashboard Component
+window.Dashboard = {
+    async render(container, state, callbacks) {
+        const raffles = await window.Storage.getRaffles();
+        
+        container.innerHTML = `
+            <div class="dashboard-header">
+                <div class="dashboard-title">
+                    <h1>Mis Sorteos</h1>
+                    <p>Gestiona, edita y realiza sorteos de tus rifas activas</p>
+                </div>
+                <div class="dashboard-actions" style="display: flex; gap: 1rem;">
+                    <button class="btn btn-primary" id="btn-new-raffle">
+                        <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
+                        <span>Nueva Rifa</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="raffle-grid" id="raffle-grid-container">
+                ${raffles.map(r => {
+                    const soldCount = r.sold_count || 0;
+                    const paidCount = r.paid_count || 0;
+                    const soldPercent = Math.round((soldCount / r.size) * 100);
+                    
+                    return `
+                        <div class="raffle-card" data-id="${r.id}">
+                            <div class="raffle-card-top">
+                                <div class="raffle-name">${r.title}</div>
+                                <span class="badge ${r.size <= 200 ? 'badge-available' : 'badge-paid'}">${r.size} Núm.</span>
+                            </div>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem;">
+                                    <span>Progreso de Ventas</span>
+                                    <span>${soldCount}/${r.size} (${soldPercent}%)</span>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: ${soldPercent}%;"></div>
+                                </div>
+                            </div>
+                            <div class="raffle-card-stats">
+                                <span>Fecha: ${r.draw_date || 'Sin fecha'}</span>
+                                <span style="color: var(--color-success); font-weight: 600;">Pagados: ${paidCount}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+                
+                ${raffles.length === 0 ? `
+                    <div class="no-raffles">
+                        <i data-lucide="ticket" style="width: 3.5rem; height: 3.5rem; color: var(--text-muted);"></i>
+                        <h3>Aún no tienes rifas registradas</h3>
+                        <p>Haz clic en "Nueva Rifa" para crear tu primer sorteo manualmente o importando datos.</p>
+                        <button class="btn btn-primary" id="btn-no-raffles-create" style="margin-top: 0.5rem;">Crear Rifa</button>
+                    </div>
+                ` : ''}
+            </div>
+            
+            <!-- Create Raffle Modal (hidden by default) -->
+            <div class="modal-overlay" id="create-modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Nueva Rifa</h3>
+                        <button class="modal-close" id="modal-close-btn">
+                            <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                        </button>
+                    </div>
+                    <form id="create-raffle-form">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="raffle-name-input">Nombre de la Rifa</label>
+                                <input type="text" id="raffle-name-input" class="input-control" placeholder="Ej. Rifa Gran Sorteo Anual" required>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="raffle-size-input">Cantidad de Números</label>
+                                    <select id="raffle-size-input" class="input-control">
+                                        <option value="100">100 Números</option>
+                                        <option value="200">200 Números</option>
+                                        <option value="500" selected>500 Números</option>
+                                        <option value="1000">1000 Números</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="raffle-date-input">Fecha del Sorteo</label>
+                                    <input type="date" id="raffle-date-input" class="input-control">
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                                <label style="display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-secondary);">
+                                    Importar desde archivo (Opcional)
+                                </label>
+                                <div class="import-section" id="import-drop-area">
+                                    <input type="file" id="import-file-input" class="file-input" accept=".xlsx, .xls, .docx">
+                                    <i data-lucide="file-spreadsheet" class="import-icon" id="import-icon"></i>
+                                    <div class="import-label" id="import-status-text">Arrastra o haz clic para subir Excel o Word</div>
+                                    <div class="import-hint" id="import-hint-text">Carga datos de compradores de forma masiva (.xlsx, .docx)</div>
+                                </div>
+                                <div id="selected-file-badge-container" style="display: none; text-align: center;">
+                                    <div class="file-selected-badge" id="file-badge">
+                                        <i data-lucide="check"></i>
+                                        <span id="file-name-text">nombre_archivo.xlsx</span>
+                                        <button type="button" id="remove-file-btn" style="background:none; border:none; color:inherit; cursor:pointer; margin-left:5px;">
+                                            <i data-lucide="trash" style="width: 14px; height: 14px;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" id="modal-submit-btn">Crear Rifa</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+
+        const cards = container.querySelectorAll('.raffle-card');
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                const id = card.getAttribute('data-id');
+                callbacks.onRaffleSelect(id);
+            });
+        });
+
+        const modal = container.querySelector('#create-modal');
+        const openModalBtn = container.querySelector('#btn-new-raffle');
+        const noRafflesBtn = container.querySelector('#btn-no-raffles-create');
+        const closeModalBtn = container.querySelector('#modal-close-btn');
+        const cancelBtn = container.querySelector('#modal-cancel-btn');
+        
+        const openModal = () => {
+            modal.style.display = 'flex';
+            form.reset();
+            resetFileState();
+        };
+
+        if (openModalBtn) openModalBtn.addEventListener('click', openModal);
+        if (noRafflesBtn) noRafflesBtn.addEventListener('click', openModal);
+
+        const closeModal = () => {
+            modal.style.display = 'none';
+        };
+        closeModalBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+
+        const fileInput = container.querySelector('#import-file-input');
+        const importArea = container.querySelector('#import-drop-area');
+        const fileBadgeContainer = container.querySelector('#selected-file-badge-container');
+        const fileNameText = container.querySelector('#file-name-text');
+        const removeFileBtn = container.querySelector('#remove-file-btn');
+        const raffleSizeSelect = container.querySelector('#raffle-size-input');
+
+        let selectedFile = null;
+
+        const updateFileUI = (file) => {
+            if (file) {
+                selectedFile = file;
+                importArea.style.display = 'none';
+                fileBadgeContainer.style.display = 'block';
+                fileNameText.textContent = file.name;
+                
+                const badge = container.querySelector('#file-badge');
+                if (file.name.endsWith('.docx')) {
+                    badge.style.borderColor = '#3b82f6';
+                    badge.style.color = '#60a5fa';
+                } else {
+                    badge.style.borderColor = '#10b981';
+                    badge.style.color = '#34d399';
+                }
+                
+                const nameInput = container.querySelector('#raffle-name-input');
+                if (nameInput.value === '') {
+                    nameInput.value = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                }
+                
+                raffleSizeSelect.disabled = true;
+                const sizeLabel = raffleSizeSelect.closest('.form-group').querySelector('label');
+                sizeLabel.innerHTML = 'Cantidad de Números <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(Se auto-detectará)</span>';
+            }
+        };
+
+        const resetFileState = () => {
+            selectedFile = null;
+            fileInput.value = '';
+            importArea.style.display = 'block';
+            fileBadgeContainer.style.display = 'none';
+            raffleSizeSelect.disabled = false;
+            const sizeLabel = raffleSizeSelect.closest('.form-group').querySelector('label');
+            sizeLabel.textContent = 'Cantidad de Números';
+        };
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                updateFileUI(e.target.files[0]);
+            }
+        });
+
+        removeFileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetFileState();
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            importArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                importArea.style.borderColor = 'var(--color-primary)';
+                importArea.style.background = 'rgba(99, 102, 241, 0.08)';
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            importArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                importArea.style.borderColor = 'var(--border-color)';
+                importArea.style.background = 'rgba(0, 0, 0, 0.15)';
+            }, false);
+        });
+
+        importArea.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files && files[0]) {
+                updateFileUI(files[0]);
+            }
+        });
+
+        const form = container.querySelector('#create-raffle-form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = container.querySelector('#modal-submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creando...';
+            
+            const name = form.querySelector('#raffle-name-input').value.trim();
+            const defaultSize = parseInt(form.querySelector('#raffle-size-input').value, 10);
+            const date = form.querySelector('#raffle-date-input').value;
+            
+            try {
+                if (selectedFile) {
+                    let parsedData;
+                    if (selectedFile.name.endsWith('.docx')) {
+                        parsedData = await window.Parser.parseWord(selectedFile);
+                    } else if (selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls')) {
+                        parsedData = await window.Parser.parseExcel(selectedFile);
+                    } else {
+                        throw new Error("Formato de archivo no soportado. Sube un archivo Excel (.xlsx) o Word (.docx)");
+                    }
+                    
+                    const newRaffle = await window.Storage.createRaffle(name, parsedData.size, date);
+                    const ticketsList = Object.values(parsedData.numbers).filter(t => t.name !== '' || t.phone !== '');
+                    if (ticketsList.length > 0) {
+                        await window.Storage.importTickets(newRaffle.id, ticketsList);
+                    }
+                    
+                    window.showToast(`Rifa creada exitosamente con ${parsedData.size} números importados!`, 'success');
+                    closeModal();
+                    callbacks.onRaffleSelect(newRaffle.id);
+                } else {
+                    const newRaffle = await window.Storage.createRaffle(name, defaultSize, date);
+                    window.showToast("Rifa creada de manera manual!", 'success');
+                    closeModal();
+                    callbacks.onRaffleSelect(newRaffle.id);
+                }
+            } catch (err) {
+                console.error(err);
+                window.showToast("Error al importar el archivo: " + err.message, 'danger');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Crear Rifa';
+            }
+        });
+    }
+};

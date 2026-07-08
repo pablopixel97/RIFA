@@ -1,0 +1,235 @@
+// REST API storage helper client
+window.Storage = {
+    // Helper to get JWT token
+    getToken() {
+        return localStorage.getItem('rifa_jwt_token');
+    },
+
+    // Helper to check authentication headers
+    getHeaders() {
+        const token = this.getToken();
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : ''
+        };
+    },
+
+    // Get session
+    getSession() {
+        const email = localStorage.getItem('rifa_session_email');
+        const token = this.getToken();
+        return (email && token) ? { email } : null;
+    },
+
+    // Save session
+    saveSession(email, token) {
+        localStorage.setItem('rifa_session_email', email);
+        localStorage.setItem('rifa_jwt_token', token);
+    },
+
+    // Clear session
+    clearSession() {
+        localStorage.removeItem('rifa_session_email');
+        localStorage.removeItem('rifa_jwt_token');
+    },
+
+    // Get all raffles (async)
+    async getRaffles() {
+        try {
+            const res = await fetch('/api/raffles', {
+                headers: this.getHeaders()
+            });
+            if (!res.ok) throw new Error("Error fetching raffles");
+            return await res.json();
+        } catch (err) {
+            console.error(err);
+            return [];
+        }
+    },
+
+    // Get a specific raffle (and its tickets/draws)
+    async getRaffle(id) {
+        try {
+            // Get base details first
+            const raffles = await this.getRaffles();
+            const baseRaffle = raffles.find(r => r.id === id);
+            if (!baseRaffle) return null;
+
+            // Fetch tickets and draws from SQLite
+            const res = await fetch(`/api/raffles/${id}/numbers`, {
+                headers: this.getHeaders()
+            });
+            if (!res.ok) throw new Error("Error fetching raffle numbers");
+            
+            const detailData = await res.json();
+            
+            return {
+                id: baseRaffle.id,
+                name: baseRaffle.title,
+                size: baseRaffle.size,
+                date: baseRaffle.draw_date,
+                ticketPrice: baseRaffle.ticket_price,
+                numbers: detailData.numbers,
+                draws: detailData.draws
+            };
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
+    },
+
+    // Save a ticket
+    async saveTicket(raffleId, number, ticketData) {
+        try {
+            const res = await fetch(`/api/tickets/${raffleId}/${number}`, {
+                method: 'PUT',
+                headers: this.getHeaders(),
+                body: JSON.stringify(ticketData)
+            });
+            if (!res.ok) throw new Error("Error updating ticket");
+            return await res.json();
+        } catch (err) {
+            console.error(err);
+            throw err;
+        }
+    },
+
+    // Save a specific raffle settings
+    async saveRaffleSettings(raffleId, settings) {
+        try {
+            const res = await fetch(`/api/raffles/${raffleId}`, {
+                method: 'PUT',
+                headers: this.getHeaders(),
+                body: JSON.stringify({
+                    title: settings.name,
+                    drawDate: settings.date,
+                    ticketPrice: settings.ticketPrice
+                })
+            });
+            if (!res.ok) throw new Error("Error saving raffle settings");
+            return await res.json();
+        } catch (err) {
+            console.error(err);
+            throw err;
+        }
+    },
+
+    // Create a new raffle (async)
+    async createRaffle(name, size, date = '', ticketPrice = 5000) {
+        const id = 'raffle_' + Date.now();
+        const drawDate = date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        
+        try {
+            const res = await fetch('/api/raffles', {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({
+                    id,
+                    title: name,
+                    size,
+                    drawDate,
+                    ticketPrice
+                })
+            });
+            if (!res.ok) throw new Error("Error creating raffle");
+            
+            // Return dummy local representation to dashboard
+            return {
+                id,
+                name,
+                size,
+                date: drawDate,
+                ticketPrice,
+                numbers: {},
+                draws: []
+            };
+        } catch (err) {
+            console.error(err);
+            throw err;
+        }
+    },
+
+    // Save a raffle draws update (post a new draw)
+    async recordDraw(raffleId, drawObj) {
+        try {
+            const res = await fetch(`/api/raffles/${raffleId}/draws`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(drawObj)
+            });
+            if (!res.ok) throw new Error("Error recording draw");
+            return await res.json();
+        } catch (err) {
+            console.error(err);
+            throw err;
+        }
+    },
+
+    // Delete a raffle (async)
+    async deleteRaffle(id) {
+        try {
+            const res = await fetch(`/api/raffles/${id}`, {
+                method: 'DELETE',
+                headers: this.getHeaders()
+            });
+            if (!res.ok) throw new Error("Error deleting raffle");
+            return await res.json();
+        } catch (err) {
+            console.error(err);
+            throw err;
+        }
+    },
+
+    // Bulk update tickets (Excel upload)
+    async importTickets(raffleId, ticketsList) {
+        try {
+            const res = await fetch(`/api/raffles/${raffleId}/import`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({ ticketsList })
+            });
+            if (!res.ok) throw new Error("Error importing tickets");
+            return await res.json();
+        } catch (err) {
+            console.error(err);
+            throw err;
+        }
+    },
+
+    // Auto-migration routine from localStorage to SQL database
+    async checkAndMigrateLocalData() {
+        const localData = localStorage.getItem('rifas_app_data');
+        if (!localData) return;
+        
+        try {
+            const oldRaffles = JSON.parse(localData);
+            if (!Array.isArray(oldRaffles) || oldRaffles.length === 0) return;
+            
+            console.log("Iniciando migración de localStorage a SQLite...");
+            
+            for (const oldRaffle of oldRaffles) {
+                // 1. Create raffle
+                await this.createRaffle(oldRaffle.name, oldRaffle.size, oldRaffle.date, oldRaffle.ticketPrice || 5000);
+                
+                // 2. Import tickets in bulk
+                const ticketsList = Object.values(oldRaffle.numbers || {}).filter(t => t.name !== '' || t.phone !== '');
+                if (ticketsList.length > 0) {
+                    await this.importTickets(oldRaffle.id, ticketsList);
+                }
+                
+                // 3. Import draws
+                if (Array.isArray(oldRaffle.draws)) {
+                    for (const draw of oldRaffle.draws) {
+                        await this.recordDraw(oldRaffle.id, draw);
+                    }
+                }
+            }
+            
+            console.log("Migración completada exitosamente.");
+            // Clear migration trigger
+            localStorage.removeItem('rifas_app_data');
+        } catch (err) {
+            console.error("Error durante la migración de datos:", err);
+        }
+    }
+};

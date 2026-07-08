@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RifaApp - Sorteos y Gestión de Rifas Masivas</title>
+    
+    <!-- SEO Optimization -->
+    <meta name="description" content="Gestiona tus sorteos de rifas de forma fácil y masiva. Permite ingresar datos manualmente o importarlos desde archivos Excel y Word. Incluye visualizadores y simulador de sorteos con ganadores y al agua.">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Modern Premium Styling -->
+    <link rel="stylesheet" href="style.css?v=8">
+    
+    <!-- Client-Side Excel and Word Parsing Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    
+    <!-- Lucide Icon Library -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Main Application Shell -->
+        <header id="app-header"></header>
+        <main id="app-main"></main>
+    </div>
+
+    <!-- Application scripts loaded sequentially (non-module to avoid CORS on local file:// protocol) -->
+    <script src="js/storage.js?v=8"></script>
+    <script src="js/parser.js?v=8"></script>
+    <script src="js/components/login.js?v=8"></script>
+    <script src="js/components/editModal.js?v=8"></script>
+    <script src="js/components/drawModal.js?v=8"></script>
+    <script src="js/components/settings.js?v=8"></script>
+    <script src="js/components/dashboard.js?v=8"></script>
+    <script src="js/components/raffleView.js?v=8"></script>
+    <script src="js/app.js?v=8"></script>
+</body>
+</html>

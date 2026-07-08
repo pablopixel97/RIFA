@@ -1,0 +1,19 @@
+{
+  "name": "rifa-app",
+  "version": "1.0.0",
+  "description": "Raffle Management App with Express, Knex and SQLite/PostgreSQL",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js",
+    "dev": "node api/index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "knex": "^3.1.0",
+    "pg": "^8.11.5",
+    "sqlite3": "^5.1.7"
+  }
+}
