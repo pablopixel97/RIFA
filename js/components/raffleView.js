@@ -46,13 +46,21 @@ window.RaffleView = {
                             </div>
                         </div>
                     </div>
-                    <div class="raffle-actions-right" style="display: flex; gap: 0.75rem;">
+                    <div class="raffle-actions-right" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
                         ${isCollab ? '' : `
-                            <button class="btn btn-secondary" id="btn-view-settings">
+                            <button class="btn btn-secondary" id="btn-quick-add-collab-top" style="font-size:0.85rem; font-weight:600; display:flex; align-items:center; gap:0.35rem; padding: 0.55rem 0.95rem;">
+                                <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>
+                                <span>+ Vendedor</span>
+                            </button>
+                            <button class="btn btn-secondary" id="btn-quick-share" style="background:rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); color: var(--color-primary); font-weight:600; font-size:0.85rem; display:flex; align-items:center; gap:0.35rem; padding: 0.55rem 0.95rem;">
+                                <i data-lucide="share-2" style="width: 16px; height: 16px;"></i>
+                                <span>Compartir</span>
+                            </button>
+                            <button class="btn btn-secondary" id="btn-view-settings" style="font-size:0.85rem; display:flex; align-items:center; gap:0.35rem; padding: 0.55rem 0.95rem;">
                                 <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
                                 <span>Ajustes</span>
                             </button>
-                            <button class="btn btn-primary" id="btn-trigger-draw" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border:none; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);">
+                            <button class="btn btn-primary" id="btn-trigger-draw" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border:none; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3); font-size:0.85rem; display:flex; align-items:center; gap:0.35rem; padding: 0.55rem 0.95rem;">
                                 <i data-lucide="award" style="width: 18px; height: 18px;"></i>
                                 <span>Sorteo</span>
                             </button>
@@ -80,12 +88,6 @@ window.RaffleView = {
                                 <span>Disponibles: <strong style="color:var(--text-primary);">${availableCount}</strong></span>
                                 <span>Pagados: <strong style="color:var(--color-success);">${paidCount}</strong></span>
                                 <span>Recaudado: <strong style="color:var(--color-success);">${formattedCollected}</strong></span>
-                                ${isCollab ? '' : `
-                                    <button class="btn btn-secondary" id="btn-quick-add-single-collab" style="font-size:0.75rem; padding:0.3rem 0.6rem; display:flex; align-items:center; gap:0.25rem; font-weight:600; border:1px solid rgba(255,255,255,0.12); margin-left: 0.5rem;" title="Agregar colaboradores a este sorteo">
-                                        <i data-lucide="user-plus" style="width: 12px; height: 12px;"></i>
-                                        <span>+ Vendedor</span>
-                                    </button>
-                                `}
                             </div>
                         `}
                     </div>
@@ -114,27 +116,36 @@ window.RaffleView = {
                     });
                 });
 
-                const quickAddSingleBtn = container.querySelector('#btn-quick-add-single-collab');
-                if (quickAddSingleBtn) {
-                    quickAddSingleBtn.addEventListener('click', async () => {
-                        const email = prompt("Ingresa el correo electrónico del vendedor registrado en RifaApp:");
-                        if (email && email.trim() !== '') {
-                            try {
-                                quickAddSingleBtn.disabled = true;
-                                quickAddSingleBtn.textContent = 'Agregando...';
-                                await window.Storage.addCollaborator(raffle.id, email.toLowerCase().trim());
-                                window.showToast("¡Vendedor agregado correctamente!", "success");
-                                await drawRaffleUI();
-                            } catch (err) {
-                                window.showToast(err.message, "danger");
-                            } finally {
-                                quickAddSingleBtn.disabled = false;
-                                quickAddSingleBtn.innerHTML = `<i data-lucide="user-plus" style="width: 12px; height: 12px;"></i><span>+ Vendedor</span>`;
-                                if (window.lucide) window.lucide.createIcons();
-                            }
-                        }
+                // Quick Share handler
+                container.querySelector('#btn-quick-share').addEventListener('click', () => {
+                    const shareUrl = `${window.location.origin}/?raffle=${raffle.id}`;
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                        window.showToast("¡Enlace copiado al portapapeles!", "success");
+                    }).catch(err => {
+                        window.showToast("No se pudo copiar el enlace", "danger");
                     });
-                }
+                });
+
+                // Quick Add Collaborator handler (top right)
+                container.querySelector('#btn-quick-add-collab-top').addEventListener('click', async () => {
+                    const btn = container.querySelector('#btn-quick-add-collab-top');
+                    const email = prompt("Ingresa el correo electrónico del vendedor registrado en RifaApp:");
+                    if (email && email.trim() !== '') {
+                        try {
+                            btn.disabled = true;
+                            btn.textContent = 'Agregando...';
+                            await window.Storage.addCollaborator(raffle.id, email.toLowerCase().trim());
+                            window.showToast("¡Vendedor agregado correctamente!", "success");
+                            await drawRaffleUI();
+                        } catch (err) {
+                            window.showToast(err.message, "danger");
+                        } finally {
+                            btn.disabled = false;
+                            btn.innerHTML = `<i data-lucide="user-plus" style="width: 16px; height: 16px;"></i><span>+ Vendedor</span>`;
+                            if (window.lucide) window.lucide.createIcons();
+                        }
+                    }
+                });
             }
 
             const viewBtns = container.querySelectorAll('.view-btn');
