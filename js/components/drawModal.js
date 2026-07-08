@@ -205,7 +205,7 @@ window.DrawModal = {
 
                     <div style="display:flex; gap:1rem; justify-content:center;">
                         <button class="btn btn-secondary" id="btn-draw-again">Sortear Otro</button>
-                        <button class="btn btn-primary" id="btn-draw-done" style="background:${isWinner ? 'var(--color-primary)' : 'var(--bg-card)'}">Listo</button>
+                        <button class="btn btn-primary" id="btn-draw-done">Listo</button>
                     </div>
                 </div>
             `;
