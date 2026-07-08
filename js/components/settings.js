@@ -76,6 +76,19 @@ window.SettingsTab = {
                                 </button>
                             </div>
                         </div>
+
+                        <div class="form-group" style="margin-top: 1.5rem;">
+                            <label>Enlace de Colaborador (Vendedores)</label>
+                            <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 0.5rem;">
+                                Comparte este enlace con tu equipo para que puedan vender y registrar números directamente.
+                            </p>
+                            <div class="share-url-box">
+                                <input type="text" id="collab-link-input" class="input-control" value="${window.location.origin}/?collab=${raffle.id}&key=${raffle.collaboratorKey || ''}" readonly style="background: rgba(0,0,0,0.3); font-size:0.85rem;">
+                                <button type="button" class="btn btn-secondary" id="btn-copy-collab" style="padding:0.75rem;">
+                                    <i data-lucide="copy" style="width: 16px; height: 16px;"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div style="border-top:1px solid rgba(239, 68, 68, 0.2); padding-top: 1.5rem; margin-top: 1rem;">
@@ -97,6 +110,8 @@ window.SettingsTab = {
         const sizeForm = container.querySelector('#settings-size-form');
         const copyBtn = container.querySelector('#btn-copy-link');
         const shareInput = container.querySelector('#share-link-input');
+        const copyCollabBtn = container.querySelector('#btn-copy-collab');
+        const collabInput = container.querySelector('#collab-link-input');
         const deleteRaffleBtn = container.querySelector('#btn-delete-raffle');
 
         // Form 1: Details Update
@@ -158,7 +173,21 @@ window.SettingsTab = {
             
             try {
                 navigator.clipboard.writeText(shareInput.value);
-                window.showToast("¡Enlace copiado al portapapeles!", "success");
+                window.showToast("¡Enlace público copiado!", "success");
+            } catch (err) {
+                document.execCommand('copy');
+                window.showToast("¡Enlace copiado!", "success");
+            }
+        });
+
+        // Copy Collab Link
+        copyCollabBtn.addEventListener('click', () => {
+            collabInput.select();
+            collabInput.setSelectionRange(0, 99999);
+            
+            try {
+                navigator.clipboard.writeText(collabInput.value);
+                window.showToast("¡Enlace de colaborador copiado!", "success");
             } catch (err) {
                 document.execCommand('copy');
                 window.showToast("¡Enlace copiado!", "success");

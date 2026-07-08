@@ -57,9 +57,26 @@ async function initDb() {
             table.integer('size').notNullable();
             table.string('draw_date');
             table.integer('ticket_price').defaultTo(5000);
+            table.string('collaborator_key');
             table.timestamp('created_at').defaultTo(db.fn.now());
             table.integer('user_id').unsigned().references('id').inTable('users').onDelete('SET NULL');
         });
+    } else {
+        // Migration: Add collaborator_key column if it doesn't exist
+        const hasCollabKey = await db.schema.hasColumn('raffles', 'collaborator_key');
+        if (!hasCollabKey) {
+            await db.schema.table('raffles', table => {
+                table.string('collaborator_key').defaultTo('');
+            });
+            // Seed random collaborator keys for existing rows
+            const crypto = require('crypto');
+            const rows = await db('raffles').select('id');
+            for (const r of rows) {
+                await db('raffles').where({ id: r.id }).update({
+                    collaborator_key: crypto.randomBytes(16).toString('hex')
+                });
+            }
+        }
     }
 
     // Create tickets table

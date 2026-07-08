@@ -11,6 +11,7 @@ window.RaffleView = {
         let activeView = 'grid'; // grid, list, details, settings
         let searchQuery = '';
 
+        const isCollab = !!(callbacks && callbacks.isCollaborator);
         const drawRaffleUI = async () => {
             raffle = await window.Storage.getRaffle(raffleId);
             
@@ -32,8 +33,8 @@ window.RaffleView = {
             container.innerHTML = `
                 <div class="raffle-view-header">
                     <div class="raffle-info-left">
-                        <button class="back-btn" id="btn-back-dashboard" title="Volver a mis sorteos">
-                            <i data-lucide="arrow-left" style="width: 20px; height: 20px;"></i>
+                        <button class="back-btn" id="btn-back-dashboard" title="${isCollab ? 'Salir del modo colaborador' : 'Volver a mis sorteos'}">
+                            <i data-lucide="${isCollab ? 'log-out' : 'arrow-left'}" style="width: 20px; height: 20px;"></i>
                         </button>
                         <div class="raffle-view-title">
                             <h2>${raffle.name}</h2>
@@ -44,14 +45,16 @@ window.RaffleView = {
                         </div>
                     </div>
                     <div class="raffle-actions-right" style="display: flex; gap: 0.75rem;">
-                        <button class="btn btn-secondary" id="btn-view-settings">
-                            <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
-                            <span>Ajustes</span>
-                        </button>
-                        <button class="btn btn-primary" id="btn-trigger-draw" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border:none; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);">
-                            <i data-lucide="award" style="width: 18px; height: 18px;"></i>
-                            <span>Sorteo</span>
-                        </button>
+                        ${isCollab ? '' : `
+                            <button class="btn btn-secondary" id="btn-view-settings">
+                                <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
+                                <span>Ajustes</span>
+                            </button>
+                            <button class="btn btn-primary" id="btn-trigger-draw" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border:none; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);">
+                                <i data-lucide="award" style="width: 18px; height: 18px;"></i>
+                                <span>Sorteo</span>
+                            </button>
+                        `}
                     </div>
                 </div>
                  <!-- Raffle Toolbar -->
@@ -89,16 +92,19 @@ window.RaffleView = {
             }
 
             container.querySelector('#btn-back-dashboard').addEventListener('click', callbacks.onGoBack);
-            container.querySelector('#btn-view-settings').addEventListener('click', () => {
-                switchView('settings');
-            });
-
-            container.querySelector('#btn-trigger-draw').addEventListener('click', () => {
-                const root = container.querySelector('#draw-modal-root');
-                window.DrawModal.render(root, raffle, () => {
-                    drawRaffleUI();
+            
+            if (!isCollab) {
+                container.querySelector('#btn-view-settings').addEventListener('click', () => {
+                    switchView('settings');
                 });
-            });
+
+                container.querySelector('#btn-trigger-draw').addEventListener('click', () => {
+                    const root = container.querySelector('#draw-modal-root');
+                    window.DrawModal.render(root, raffle, () => {
+                        drawRaffleUI();
+                    });
+                });
+            }
 
             const viewBtns = container.querySelectorAll('.view-btn');
             viewBtns.forEach(btn => {

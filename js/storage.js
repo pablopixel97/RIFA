@@ -8,9 +8,11 @@ window.Storage = {
     // Helper to check authentication headers
     getHeaders() {
         const token = this.getToken();
+        const collabKey = localStorage.getItem('rifa_collab_key') || '';
         return {
             'Content-Type': 'application/json',
-            'Authorization': token ? `Bearer ${token}` : ''
+            'Authorization': token ? `Bearer ${token}` : '',
+            'x-collaborator-key': collabKey
         };
     },
 
@@ -59,12 +61,6 @@ window.Storage = {
     // Get a specific raffle (and its tickets/draws)
     async getRaffle(id) {
         try {
-            // Get base details first
-            const raffles = await this.getRaffles();
-            const baseRaffle = raffles.find(r => r.id === id);
-            if (!baseRaffle) return null;
-
-            // Fetch tickets and draws from SQLite
             const res = await fetch(`/api/raffles/${id}/numbers`, {
                 headers: this.getHeaders()
             });
@@ -73,11 +69,12 @@ window.Storage = {
             const detailData = await res.json();
             
             return {
-                id: baseRaffle.id,
-                name: baseRaffle.title,
-                size: baseRaffle.size,
-                date: baseRaffle.draw_date,
-                ticketPrice: baseRaffle.ticket_price,
+                id: detailData.id,
+                name: detailData.title,
+                size: detailData.size,
+                date: detailData.draw_date,
+                ticketPrice: detailData.ticket_price,
+                collaboratorKey: detailData.collaborator_key,
                 numbers: detailData.numbers,
                 draws: detailData.draws
             };

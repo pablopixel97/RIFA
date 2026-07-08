@@ -125,8 +125,14 @@ const App = {
     checkAuth() {
         const urlParams = new URLSearchParams(window.location.search);
         const raffleId = urlParams.get('raffle');
+        const collabId = urlParams.get('collab');
+        const collabKey = urlParams.get('key');
         
-        if (raffleId) {
+        if (collabId && collabKey) {
+            localStorage.setItem('rifa_collab_key', collabKey);
+            this.state.currentView = 'collab-view';
+            this.state.selectedRaffleId = collabId;
+        } else if (raffleId) {
             this.state.currentView = 'public-view';
             this.state.selectedRaffleId = raffleId;
         } else if (this.state.user) {
@@ -169,6 +175,16 @@ const App = {
             });
         } else if (this.state.currentView === 'public-view') {
             window.PublicView.render(main, this.state.selectedRaffleId);
+        } else if (this.state.currentView === 'collab-view') {
+            window.RaffleView.render(main, this.state, this.state.selectedRaffleId, {
+                isCollaborator: true,
+                onGoBack: () => {
+                    localStorage.removeItem('rifa_collab_key');
+                    this.state.selectedRaffleId = null;
+                    this.state.currentView = 'login';
+                    this.navigate();
+                }
+            });
         }
     }
 };

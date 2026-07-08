@@ -19,6 +19,11 @@ app.use(express.static(path.join(__dirname, '..')));
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
+    const collabKey = req.headers['x-collaborator-key'];
+    
+    if (!token && collabKey) {
+        return next();
+    }
     
     if (!token) return res.status(401).json({ error: 'Acceso no autorizado' });
     
@@ -27,6 +32,22 @@ function authenticateToken(req, res, next) {
         req.user = user;
         next();
     });
+}
+
+// Access verification helper for owners and collaborators
+async function verifyAccess(raffleId, req) {
+    if (req.user && req.user.id) {
+        const raffle = await db('raffles').select('id').where({ id: raffleId, user_id: req.user.id }).first();
+        if (raffle) return { isOwner: true };
+    }
+    
+    const collabKey = req.headers['x-collaborator-key'];
+    if (collabKey) {
+        const raffle = await db('raffles').select('id').where({ id: raffleId, collaborator_key: collabKey }).first();
+        if (raffle) return { isOwner: false };
+    }
+    
+    return null;
 }
 
 // Database lazy initialization helper to avoid race conditions on Serverless cold starts
@@ -240,12 +261,16 @@ app.post('/api/raffles', authenticateToken, async (req, res) => {
     }
     
     try {
+        const crypto = require('crypto');
+        const collaboratorKey = crypto.randomBytes(16).toString('hex');
+        
         await db('raffles').insert({
             id,
             title,
             size,
             draw_date: drawDate,
             ticket_price: ticketPrice || 5000,
+            collaborator_key: collaboratorKey,
             user_id: req.user.id
         });
         
@@ -331,7 +356,10 @@ app.get('/api/raffles/:id/numbers', authenticateToken, async (req, res) => {
     const raffleId = req.params.id;
     
     try {
-        const raffle = await db('raffles').select('size').where({ id: raffleId, user_id: req.user.id }).first();
+        const access = await verifyAccess(raffleId, req);
+        if (!access) return res.status(403).json({ error: 'Acceso denegado' });
+        
+        const raffle = await db('raffles').select('size', 'title', 'draw_date', 'ticket_price', 'collaborator_key').where({ id: raffleId }).first();
         if (!raffle) return res.status(404).json({ error: 'Rifa no encontrada' });
         
         const tickets = await db('tickets').where('raffle_id', raffleId).orderBy('number', 'asc');
@@ -361,6 +389,12 @@ app.get('/api/raffles/:id/numbers', authenticateToken, async (req, res) => {
         }));
         
         res.json({
+            id: raffleId,
+            title: raffle.title,
+            size: raffle.size,
+            draw_date: raffle.draw_date,
+            ticket_price: raffle.ticket_price,
+            collaborator_key: raffle.collaborator_key,
             numbers,
             draws: drawsFormatted
         });
@@ -376,8 +410,8 @@ app.put('/api/tickets/:raffleId/:number', authenticateToken, async (req, res) =>
     const { name, phone, paid } = req.body;
     
     try {
-        const raffle = await db('raffles').select('id').where({ id: raffleId, user_id: req.user.id }).first();
-        if (!raffle) return res.status(403).json({ error: 'Acceso denegado' });
+        const access = await verifyAccess(raffleId, req);
+        if (!access) return res.status(403).json({ error: 'Acceso denegado' });
         
         await db('tickets').where({ raffle_id: raffleId, number }).update({
             name: name || '',
@@ -427,8 +461,8 @@ app.post('/api/raffles/:id/import', authenticateToken, async (req, res) => {
     }
     
     try {
-        const raffle = await db('raffles').select('id').where({ id: raffleId, user_id: req.user.id }).first();
-        if (!raffle) return res.status(403).json({ error: 'Acceso denegado' });
+        const access = await verifyAccess(raffleId, req);
+        if (!access) return res.status(403).json({ error: 'Acceso denegado' });
         
         // Execute inside transaction for atomicity and speed
         await db.transaction(async trx => {
