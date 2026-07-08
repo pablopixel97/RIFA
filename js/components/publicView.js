@@ -132,7 +132,7 @@ window.PublicView = {
                     </div>
 
                     <!-- Main Numbers Grid -->
-                    <div class="numbers-grid" id="public-numbers-grid" style="grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 0.5rem;">
+                    <div class="numbers-grid" id="public-numbers-grid">
                         <!-- JS renders numbers here -->
                     </div>
                 </div>
@@ -164,25 +164,22 @@ window.PublicView = {
 
                 if (!matchesSearch || !matchesFilter) return;
 
-                // Determine Class
-                let stateClass = 'num-available';
-                let stateLabel = 'Disponible';
+                // Determine Class based on status
+                let stateClass = 'available';
+                let isUnpaid = false;
                 if (t.taken && !t.paid) {
-                    stateClass = 'num-reserved';
-                    stateLabel = 'Reservado';
+                    stateClass = 'bought';
+                    isUnpaid = true;
                 } else if (t.paid) {
-                    stateClass = 'num-paid';
-                    stateLabel = 'Pagado';
+                    stateClass = 'bought';
                 }
 
                 const item = document.createElement('div');
-                item.className = `number-item ${stateClass}`;
-                item.style.cursor = 'default'; // Disable pointer click feedback since it's read-only
+                item.className = `number-card ${stateClass} ${isUnpaid ? 'unpaid' : ''}`;
+                item.style.cursor = 'default';
                 item.innerHTML = `
-                    <div class="number-num" style="font-weight: 700;">${t.number}</div>
-                    <div class="number-name" style="font-size: 0.65rem; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding: 0 2px;">
-                        ${t.taken ? t.name : stateLabel}
-                    </div>
+                    <div class="number-num">${t.number}</div>
+                    ${t.taken ? `<span class="number-card-buyer-preview">${t.name}</span>` : ''}
                 `;
                 
                 gridContainer.appendChild(item);
