@@ -241,8 +241,8 @@ window.Dashboard = {
                 }
                 
                 raffleSizeSelect.disabled = true;
-                const sizeLabel = raffleSizeSelect.closest('.form-group').querySelector('label');
-                sizeLabel.innerHTML = 'Cantidad de Números <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(Se auto-detectará)</span>';
+                raffleSizeSelect.placeholder = 'Se auto-detectará';
+                raffleSizeSelect.value = '';
             }
         };
 
@@ -252,8 +252,8 @@ window.Dashboard = {
             importArea.style.display = 'block';
             fileBadgeContainer.style.display = 'none';
             raffleSizeSelect.disabled = false;
-            const sizeLabel = raffleSizeSelect.closest('.form-group').querySelector('label');
-            sizeLabel.textContent = 'Cantidad de Números';
+            raffleSizeSelect.placeholder = 'Ej. 500';
+            raffleSizeSelect.value = '500';
         };
 
         const typeInputs = container.querySelectorAll('input[name="raffle-type"]');
