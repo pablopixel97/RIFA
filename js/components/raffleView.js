@@ -152,7 +152,10 @@ window.RaffleView = {
                                     <i data-lucide="users" style="width: 20px; height: 20px; color: var(--color-primary);"></i>
                                     <span>Talonarios por Vendedor</span>
                                 </h3>
-                                <span style="font-size:0.75rem; color:var(--text-secondary);">Cada vendedor posee una lista única e independiente</span>
+                                <button class="btn btn-primary" id="btn-quick-add-collab" style="font-size:0.8rem; padding:0.45rem 0.9rem; display:flex; align-items:center; gap:0.35rem; font-weight:600;">
+                                    <i data-lucide="user-plus" style="width: 14px; height: 14px;"></i>
+                                    <span>Agregar Vendedor</span>
+                                </button>
                             </div>
                             <div style="display:flex; flex-direction:column; gap:0.75rem;">
                                 ${sellersList.map(s => {
@@ -192,6 +195,28 @@ window.RaffleView = {
                     `;
                     
                     if (window.lucide) window.lucide.createIcons();
+                    
+                    const quickAddBtn = innerContainer.querySelector('#btn-quick-add-collab');
+                    if (quickAddBtn) {
+                        quickAddBtn.addEventListener('click', async () => {
+                            const email = prompt("Ingresa el correo electrónico del vendedor registrado en RifaApp:");
+                            if (email && email.trim() !== '') {
+                                try {
+                                    quickAddBtn.disabled = true;
+                                    quickAddBtn.textContent = 'Agregando...';
+                                    await window.Storage.addCollaborator(raffle.id, email.toLowerCase().trim());
+                                    window.showToast("¡Vendedor agregado correctamente!", "success");
+                                    await drawRaffleUI();
+                                } catch (err) {
+                                    window.showToast(err.message, "danger");
+                                } finally {
+                                    quickAddBtn.disabled = false;
+                                    quickAddBtn.innerHTML = `<i data-lucide="user-plus" style="width: 14px; height: 14px;"></i><span>Agregar Vendedor</span>`;
+                                    if (window.lucide) window.lucide.createIcons();
+                                }
+                            }
+                        });
+                    }
                     
                     innerContainer.querySelectorAll('.btn-view-seller-list').forEach(btn => {
                         btn.addEventListener('click', () => {
