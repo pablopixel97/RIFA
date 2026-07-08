@@ -81,6 +81,22 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+app.get('/api/debug-env', (req, res) => {
+    res.json({
+        has_neon: !!process.env.NEON_DATABASE_URL,
+        has_postgres: !!process.env.POSTGRES_URL,
+        has_database: !!process.env.DATABASE_URL,
+        keys: Object.keys(process.env).filter(k => 
+            !k.toLowerCase().includes('secret') && 
+            !k.toLowerCase().includes('password') && 
+            !k.toLowerCase().includes('key') && 
+            !k.toLowerCase().includes('token') &&
+            !k.toLowerCase().includes('url')
+        )
+    });
+});
+
+
 // Get current profile
 app.get('/api/auth/me', authenticateToken, (req, res) => {
     res.json({ id: req.user.id, email: req.user.email });
