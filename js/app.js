@@ -176,6 +176,8 @@ const App = {
         const main = document.getElementById('app-main');
         if (!main) return;
 
+        this.renderHeader();
+
         main.innerHTML = '';
 
         if (this.state.currentView === 'login') {
