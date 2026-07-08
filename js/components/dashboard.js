@@ -117,7 +117,7 @@ window.Dashboard = {
                             
                             <div class="form-group" style="margin-bottom: 1.25rem;">
                                 <label style="display:block; margin-bottom:0.5rem; font-weight:600; font-size:0.9rem; color:var(--text-secondary);">Modalidad de Venta</label>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-row-grid">
                                     <label class="input-control" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.02); border-radius: 8px;">
                                         <input type="radio" name="raffle-type" value="single" checked style="accent-color: var(--color-primary); width:16px; height:16px;">
                                         <div>
@@ -135,7 +135,7 @@ window.Dashboard = {
                                 </div>
                             </div>
                             
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-row-grid">
                                 <div class="form-group">
                                     <label id="size-input-label" for="raffle-size-input">Cantidad de Números</label>
                                     <input type="number" id="raffle-size-input" class="input-control" value="500" min="1" max="10000" placeholder="Ej. 500" required>

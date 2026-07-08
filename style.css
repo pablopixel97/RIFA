@@ -1195,3 +1195,17 @@ input:checked + .slider:before {
         aspect-ratio: 1;
     }
 }
+
+/* Modal Form Grid Layout */
+.form-row-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 480px) {
+    .form-row-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+}
