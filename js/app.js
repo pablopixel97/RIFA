@@ -116,7 +116,13 @@ const App = {
     },
 
     checkAuth() {
-        if (this.state.user) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const raffleId = urlParams.get('raffle');
+        
+        if (raffleId) {
+            this.state.currentView = 'public-view';
+            this.state.selectedRaffleId = raffleId;
+        } else if (this.state.user) {
             this.state.currentView = 'dashboard';
         } else {
             this.state.currentView = 'login';
@@ -154,6 +160,8 @@ const App = {
                     this.navigate();
                 }
             });
+        } else if (this.state.currentView === 'public-view') {
+            window.PublicView.render(main, this.state.selectedRaffleId);
         }
     }
 };

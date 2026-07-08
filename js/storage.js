@@ -87,6 +87,18 @@ window.Storage = {
         }
     },
 
+    // Get public raffle details (visitor view)
+    async getPublicRaffle(id) {
+        try {
+            const res = await fetch(`/api/public/raffles/${id}`);
+            if (!res.ok) throw new Error("Rifa pública no encontrada");
+            return await res.json();
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
+    },
+
     // Save a ticket
     async saveTicket(raffleId, number, ticketData) {
         try {

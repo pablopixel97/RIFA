@@ -152,6 +152,53 @@ app.get('/api/debug-env', async (req, res) => {
     res.json(info);
 });
 
+// Public Endpoint for visitor view (privacy-safe: hides phone numbers and masks full names of buyers)
+app.get('/api/public/raffles/:id', async (req, res) => {
+    const raffleId = req.params.id;
+    try {
+        const raffle = await db('raffles').where({ id: raffleId }).first();
+        if (!raffle) return res.status(404).json({ error: 'Rifa no encontrada' });
+        
+        const tickets = await db('tickets').where('raffle_id', raffleId).orderBy('number', 'asc');
+        const draws = await db('draws').where('raffle_id', raffleId).orderBy('timestamp', 'asc');
+        
+        // Hide private buyer details for public safety, only expose status
+        const numbers = {};
+        tickets.forEach(t => {
+            const isTaken = (t.name && t.name.trim() !== '') || (t.phone && t.phone.trim() !== '');
+            numbers[t.number] = {
+                number: t.number,
+                taken: isTaken,
+                name: isTaken ? (t.name.split(' ').map((w, i) => i === 0 ? w : w[0] + '.').join(' ')) : '',
+                paid: t.paid === 1 || t.paid === true
+            };
+        });
+        
+        const drawsFormatted = draws.map(d => ({
+            type: d.type,
+            number: d.number,
+            buyer: {
+                name: d.buyer_name ? (d.buyer_name.split(' ').map((w, i) => i === 0 ? w : w[0] + '.').join(' ')) : '',
+                paid: d.buyer_paid === 1 || d.buyer_paid === true
+            },
+            timestamp: d.timestamp
+        }));
+        
+        res.json({
+            id: raffle.id,
+            title: raffle.title,
+            size: raffle.size,
+            draw_date: raffle.draw_date,
+            ticket_price: raffle.ticket_price,
+            numbers,
+            draws: drawsFormatted
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error al consultar la rifa pública' });
+    }
+});
+
 
 // Get current profile
 app.get('/api/auth/me', authenticateToken, (req, res) => {

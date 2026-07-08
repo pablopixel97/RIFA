@@ -70,7 +70,7 @@ window.SettingsTab = {
                                 Comparte este enlace con tus clientes para que vean qué números siguen disponibles en tiempo real.
                             </p>
                             <div class="share-url-box">
-                                <input type="text" id="share-link-input" class="input-control" value="https://rifasapp.com/visor/${raffle.id}" readonly style="background: rgba(0,0,0,0.3); font-size:0.85rem;">
+                                <input type="text" id="share-link-input" class="input-control" value="${window.location.origin}/?raffle=${raffle.id}" readonly style="background: rgba(0,0,0,0.3); font-size:0.85rem;">
                                 <button type="button" class="btn btn-secondary" id="btn-copy-link" style="padding:0.75rem;">
                                     <i data-lucide="copy" style="width: 16px; height: 16px;"></i>
                                 </button>
