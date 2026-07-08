@@ -14,6 +14,81 @@ window.RaffleView = {
         let selectedSellerName = '';
 
         const isCollab = !!(callbacks && callbacks.isCollaborator);
+
+        const openAddSellerModal = (raffleId, onComplete) => {
+            let modalRoot = container.querySelector('#add-seller-modal-root');
+            if (!modalRoot) {
+                modalRoot = document.createElement('div');
+                modalRoot.id = 'add-seller-modal-root';
+                container.appendChild(modalRoot);
+            }
+            
+            modalRoot.innerHTML = `
+                <div class="modal-overlay" id="add-seller-modal" style="z-index: 1100;">
+                    <div class="modal-content" style="max-width: 420px; animation: scaleIn 0.25s ease-out;">
+                        <div class="modal-header">
+                            <h3 class="modal-title">Agregar Vendedor</h3>
+                            <button class="modal-close" id="add-seller-close">
+                                <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                            </button>
+                        </div>
+                        <form id="add-seller-form">
+                            <div class="modal-body">
+                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.4;">
+                                    Ingresa el correo electrónico de la cuenta del vendedor en <strong>Rifapp</strong>. Podrá ingresar para vender y cobrar números.
+                                </p>
+                                <div class="form-group">
+                                    <label for="seller-email-input">Correo Electrónico</label>
+                                    <input type="email" id="seller-email-input" class="input-control" placeholder="correo@vendedor.com" required style="font-size: 0.9rem;">
+                                </div>
+                            </div>
+                            <div class="modal-footer" style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                                <button type="button" class="btn btn-secondary" id="add-seller-cancel">Cancelar</button>
+                                <button type="submit" class="btn btn-primary" id="add-seller-submit">Agregar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            
+            if (window.lucide) window.lucide.createIcons();
+            
+            const modal = modalRoot.querySelector('#add-seller-modal');
+            const form = modalRoot.querySelector('#add-seller-form');
+            const closeBtn = modalRoot.querySelector('#add-seller-close');
+            const cancelBtn = modalRoot.querySelector('#add-seller-cancel');
+            const submitBtn = modalRoot.querySelector('#add-seller-submit');
+            const emailInput = modalRoot.querySelector('#seller-email-input');
+            
+            const closeModal = () => {
+                modal.style.display = 'none';
+                modalRoot.innerHTML = '';
+            };
+            
+            closeBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeModal);
+            
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = emailInput.value.trim().toLowerCase();
+                if (!email) return;
+                
+                try {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Agregando...';
+                    await window.Storage.addCollaborator(raffleId, email);
+                    window.showToast("¡Vendedor agregado correctamente!", "success");
+                    closeModal();
+                    if (onComplete) onComplete();
+                } catch (err) {
+                    window.showToast(err.message, "danger");
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Agregar';
+                }
+            });
+        };
+
         const drawRaffleUI = async () => {
             raffle = await window.Storage.getRaffle(raffleId);
             
@@ -127,24 +202,8 @@ window.RaffleView = {
                 });
 
                 // Quick Add Collaborator handler (top right)
-                container.querySelector('#btn-quick-add-collab-top').addEventListener('click', async () => {
-                    const btn = container.querySelector('#btn-quick-add-collab-top');
-                    const email = prompt("Ingresa el correo electrónico del vendedor registrado en RifaApp:");
-                    if (email && email.trim() !== '') {
-                        try {
-                            btn.disabled = true;
-                            btn.textContent = 'Agregando...';
-                            await window.Storage.addCollaborator(raffle.id, email.toLowerCase().trim());
-                            window.showToast("¡Vendedor agregado correctamente!", "success");
-                            await drawRaffleUI();
-                        } catch (err) {
-                            window.showToast(err.message, "danger");
-                        } finally {
-                            btn.disabled = false;
-                            btn.innerHTML = `<i data-lucide="user-plus" style="width: 16px; height: 16px;"></i><span>+ Vendedor</span>`;
-                            if (window.lucide) window.lucide.createIcons();
-                        }
-                    }
+                container.querySelector('#btn-quick-add-collab-top').addEventListener('click', () => {
+                    openAddSellerModal(raffle.id, () => drawRaffleUI());
                 });
             }
 
@@ -238,23 +297,8 @@ window.RaffleView = {
                     
                     const quickAddBtn = innerContainer.querySelector('#btn-quick-add-collab');
                     if (quickAddBtn) {
-                        quickAddBtn.addEventListener('click', async () => {
-                            const email = prompt("Ingresa el correo electrónico del vendedor registrado en RifaApp:");
-                            if (email && email.trim() !== '') {
-                                try {
-                                    quickAddBtn.disabled = true;
-                                    quickAddBtn.textContent = 'Agregando...';
-                                    await window.Storage.addCollaborator(raffle.id, email.toLowerCase().trim());
-                                    window.showToast("¡Vendedor agregado correctamente!", "success");
-                                    await drawRaffleUI();
-                                } catch (err) {
-                                    window.showToast(err.message, "danger");
-                                } finally {
-                                    quickAddBtn.disabled = false;
-                                    quickAddBtn.innerHTML = `<i data-lucide="user-plus" style="width: 14px; height: 14px;"></i><span>Agregar Vendedor</span>`;
-                                    if (window.lucide) window.lucide.createIcons();
-                                }
-                            }
+                        quickAddBtn.addEventListener('click', () => {
+                            openAddSellerModal(raffle.id, () => drawRaffleUI());
                         });
                     }
                     
